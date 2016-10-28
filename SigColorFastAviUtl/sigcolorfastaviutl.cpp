@@ -1,4 +1,6 @@
 ﻿#define NOMINMAX
+#include "../3rd_party/windows_registry_manager/include/win32_reg/registry_key.hpp"
+#include <tchar.h>
 #include <Windows.h>
 #include "filter.h" //please set this to AviUtl SDK's filter.h
 #include "SigmoidTable.h"
@@ -99,7 +101,7 @@ FILTER_DLL filter_jp = {               // Japanese UI filter info
 																//	FILTER_FLAG_IMPORT				: インポートメニューを作ります
 																//	FILTER_FLAG_EXPORT				: エクスポートメニューを作ります
 																0, 0,						//	dialogbox size
-																"滑やか対比度",			//	Filter plugin name
+																"シグモイドコントラスト調整",			//	Filter plugin name
 																TRACK_N,					//	トラックバーの数 (0なら名前初期値等もNULLでよい)
 																jp_name,					//	slider label names in Japanese
 																track_default,				//	トラックバーの初期値郡へのポインタ
@@ -115,7 +117,7 @@ FILTER_DLL filter_jp = {               // Japanese UI filter info
 																NULL, NULL,					//	Reserved. Do not use.
 																NULL,						//  pointer to extra data when FILTER_FLAG_EX_DATA is set
 																NULL,						//  extra data size
-																"滑やか対比度 0.01 by MT",
+																"シグモイドコントラスト調整 0.01 by MT",
 																//  pointer or c-string for full filter info when FILTER_FLAG_EX_INFORMATION is set.
 																NULL,						//	invoke just before saving starts. NULL to skip
 																NULL,						//	invoke just after saving ends. NULL to skip
@@ -170,28 +172,23 @@ FILTER_DLL filter_cht = {               // Chinese Traditional UI filter info
 EXTERN_C  __declspec(dllexport) FILTER_DLL*  GetFilterTable(void)
 {
 	FILTER_DLL* UITable = nullptr;
-	LPCPINFOEX cpinfo = new CPINFOEX{ 0 };
-	if (GetCPInfoEx(CP_THREAD_ACP, 0, cpinfo)) // try to get AviUtl's current codepage
-	{
-		if (cpinfo->CodePage == 932) // 932 is Japanese S-JIS; 950 is BIG5 Chinese
-		{
-			UITable = &filter_jp;
-		}
-		else if (cpinfo->CodePage == 950)
-		{
-			UITable = &filter_cht;
-		}
-		else // default to English to avoid scrambled text
-		{
-			UITable = &filter_en;
+	try {
+		microsoft::win32::registry_key reg(
+			microsoft::win32::registry_hive::local_machine,
+			_T(R"(SYSTEM\CurrentControlSet\Control\Nls\CodePage)"),
+			w_system::security::registry_rights::read_key
+		);
+		const auto code_page = std::stoi(reg.get_value<microsoft::win32::registry_value_kind::string>(_T("OEMCP")));
+		switch (code_page) {
+			case 932: UITable = &filter_jp; break;
+			case 950: UITable = &filter_cht; break;
+			default: UITable = &filter_en; break;
 		}
 	}
-	else // if something wrong with CP retrival, use English UI
-	{
+	catch (const std::exception& er) {
+		MessageBoxExA(NULL, er.what(), "exception", MB_OK | MB_ICONINFORMATION, MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN));
 		UITable = &filter_en;
 	}
-	delete cpinfo;
-
 	return UITable;
 }
 

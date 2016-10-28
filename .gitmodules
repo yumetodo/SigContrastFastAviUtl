@@ -1,0 +1,3 @@
+[submodule "3rd_party/windows_registry_manager"]
+	path = 3rd_party/windows_registry_manager
+	url = https://github.com/yumetodo/windows_registry_manager.git
