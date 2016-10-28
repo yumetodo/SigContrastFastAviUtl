@@ -15,31 +15,31 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\filter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\LUT.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\Histogram.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\SigmoidTable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClCompile Include="Histogram.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LUT.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sigcolorfastaviutl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SigmoidTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\sigcolorfastaviutl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\LUT.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\Histogram.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\SigmoidTable.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <ClInclude Include="LUT.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SigmoidTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="filter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Histogram.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
