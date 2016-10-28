@@ -62,10 +62,14 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;SIGCOLORFASTAVIUTL_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <DisableSpecificWarnings>4566</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -81,6 +85,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
+      <DisableSpecificWarnings>4566</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -89,19 +94,22 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <MinimumRequiredVersion>6.1</MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\filter.h" />
-    <ClInclude Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\Histogram.h" />
-    <ClInclude Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\LUT.h" />
-    <ClInclude Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\SigmoidTable.h" />
+    <ClCompile Include="Histogram.cpp" />
+    <ClCompile Include="LUT.cpp" />
+    <ClCompile Include="sigcolorfastaviutl.cpp" />
+    <ClCompile Include="SigmoidTable.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\Histogram.cpp" />
-    <ClCompile Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\LUT.cpp" />
-    <ClCompile Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\sigcolorfastaviutl.cpp" />
-    <ClCompile Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\SigmoidTable.cpp" />
+    <ClInclude Include="filter.h" />
+    <ClInclude Include="Histogram.h" />
+    <ClInclude Include="LUT.h" />
+    <ClInclude Include="SigmoidTable.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
