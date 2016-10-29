@@ -11,7 +11,7 @@ class LUT
 {
 public:
 	LUT();
-	~LUT();
+	virtual ~LUT();
 	int lookup(int key);
 	//Getter
 	int min() const;
@@ -24,5 +24,6 @@ public:
 protected:
 	std::map<int, int> table;
 	int kmin, kmax, kstep;
+	
 };
 

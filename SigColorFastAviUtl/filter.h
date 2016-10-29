@@ -943,11 +943,19 @@ typedef struct {
 
 #define	MID_FILTER_BUTTON			12004
 
-BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip);
-BOOL func_init(FILTER *fp);
-BOOL func_exit(FILTER *fp);
-BOOL func_update(FILTER *fp, int status);
-BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp);
+BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip);
+BOOL func_init_con(FILTER *fp);
+BOOL func_exit_con(FILTER *fp);
+BOOL func_update_con(FILTER *fp, int status);
+BOOL func_WndProc_con(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp);
+
+BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip);
+BOOL func_init_sd(FILTER *fp);
+BOOL func_exit_sd(FILTER *fp);
+BOOL func_update_sd(FILTER *fp, int status);
+BOOL func_WndProc_sd(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp);
+
+
 BOOL func_save_start(FILTER *fp, int s, int e, void *editp);
 BOOL func_save_end(FILTER *fp, void *editp);
 BOOL func_is_saveframe(FILTER *fp, void *editp, int saveno, int frame, int fps, int edit_flag, int inter);

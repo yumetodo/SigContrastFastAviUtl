@@ -2,40 +2,59 @@
 #include <Windows.h>
 #include "filter.h" //please set this to AviUtl SDK's filter.h
 #include "SigmoidTable.h"
+#include "RSigmoidTable.h"
+#define USECLOCK
+#ifdef USECLOCK
+#include <chrono>
+#include <ctime>
+#include <ratio>
+#include <string>
+#endif
 
-// About setting multilingual UI //
-/*
-The slider and button text are all fixed when you export a FILTER_DLL struct to outside.
-Once exported, you cannot change the UI text except the window title.
-Hence, we need to set individual FILTER_DLL struct for EACH language.
-It is actually copy-and-paste mostly, just need to change the slider name and checkbox/button name pointers.
-The example below gives the UI in Japanese and Traditional Chinese. If the thread's codepage is neither 932(SJIS) or 950(BIG5),
-it exports the English UI.
-*/
 
+#ifdef _DEBUG
+#define PLUGIN_NAME_SCON "SContrast DEBUG"
+#define VERSION_STR_SCON "SContrast(DEBUG) v0.02 by MaverickTse"
+#define PLUGIN_NAME_SDCON "SDeContrast DEBUG"
+#define VERSION_STR_SDCON "SDeContrast(DEBUG) v0.02 by MaverickTse"
+#else
+#define PLUGIN_NAME_SCON "SContrast"
+#define VERSION_STR_SCON "SContrast v0.02 by MaverickTse"
+#define PLUGIN_NAME_SDCON "SDeContrast"
+#define VERSION_STR_SDCON "SDeContrast v0.02 by MaverickTse"
+#endif
+
+bool prevIsYC_Con = true;
+bool prevIsYC_SD = true;
 // Define sliders
 #define	TRACK_N	2 //	slider count. This creates 3 sliders
 // i18n slider name
 char* en_name[] = { "Midtone", "Strength" };
-char* jp_name[] = { "中間値", "強さ" };
-char* cht_name[] = { "中間值", "強度" };
+//char* jp_name[] = { "中間値", "強さ" };
+//char* cht_name[] = { "中間值", "強度" };
 
 int		track_default[] = { 50, 5 };	//	default values
 int		track_s[] = { 0, 1 };	//	minimum values
 int		track_e[] = { 100, 30 };	//	maximum values
 
 											// Define checkboxes and buttons
-#define	CHECK_N	4														//	total number of check box and button
-char	*check_name_en[] = { "Y", "R", "G", "B" };				//	label name
-char	*check_name_jp[] = { "Y", "R", "G", "B" };				//	label name:JP
-char	*check_name_cht[] = { "Y", "R", "G", "B" };				//	label name:CHT
+#define	CHECK_N	5														//	total number of check box and button
+char	*check_name_en[] = { "Y", "R", "G", "B", "Benchmark" };				//	label name
 int		check_default[] = { 1, 0, 0, 0 };				//	for checkbox: 0(unchecked) or 1(checked); for button: must be -1
 
+//char	*check_name_jp[] = { "Y", "R", "G", "B" };				//	label name:JP
+//char	*check_name_cht[] = { "Y", "R", "G", "B" };				//	label name:CHT
+
+#ifdef USECLOCK
+std::chrono::time_point<std::chrono::steady_clock> start_con, end_con, start_sd, end_sd;
+#endif
+
 SigmoidTable* ST = nullptr;
+RSigmoidTable* RST = nullptr;
 
 
 													// Define filter info
-FILTER_DLL filter_en = {               // English UI filter info
+FILTER_DLL scon_en = {               // English UI filter info
 	FILTER_FLAG_EX_INFORMATION | FILTER_FLAG_PRIORITY_LOWEST,	//	filter flags, use bitwise OR to add more
 																//	FILTER_FLAG_ALWAYS_ACTIVE		: フィルタを常にアクティブにします
 																//	FILTER_FLAG_CONFIG_POPUP		: 設定をポップアップメニューにします
@@ -56,7 +75,7 @@ FILTER_DLL filter_en = {               // English UI filter info
 																//	FILTER_FLAG_IMPORT				: インポートメニューを作ります
 																//	FILTER_FLAG_EXPORT				: エクスポートメニューを作ります
 																0, 0,						//	dialogbox size
-																"SigContrast Fast",			//	Filter plugin name
+																PLUGIN_NAME_SCON,			//	Filter plugin name
 																TRACK_N,					//	トラックバーの数 (0なら名前初期値等もNULLでよい)
 																en_name,					//	slider label names in English
 																track_default,				//	トラックバーの初期値郡へのポインタ
@@ -64,21 +83,21 @@ FILTER_DLL filter_en = {               // English UI filter info
 																CHECK_N,					//	チェックボックスの数 (0なら名前初期値等もNULLでよい)
 																check_name_en,					//	チェックボックスの名前郡へのポインタ
 																check_default,				//	チェックボックスの初期値郡へのポインタ
-																func_proc,					//	main filter function, use NULL to skip
-																NULL,						//	initialization function, use NULL to skip
-																func_exit,						//	on-exit function, use NULL to skip
-																func_update,						//	invokes when when settings changed. use NULL to skip
-																NULL,						//	for capturing dialog's control messages. Essential if you use button or auto uncheck some checkboxes.
+																func_proc_con,					//	main filter function, use NULL to skip
+																func_init_con,						//	initialization function, use NULL to skip
+																func_exit_con,						//	on-exit function, use NULL to skip
+																func_update_con,						//	invokes when when settings changed. use NULL to skip
+																func_WndProc_con,						//	for capturing dialog's control messages. Essential if you use button or auto uncheck some checkboxes.
 																NULL, NULL,					//	Reserved. Do not use.
 																NULL,						//  pointer to extra data when FILTER_FLAG_EX_DATA is set
 																NULL,						//  extra data size
-																"SigContrast Fast 0.01 by MT",
+																VERSION_STR_SCON,
 																//  pointer or c-string for full filter info when FILTER_FLAG_EX_INFORMATION is set.
 																NULL,						//	invoke just before saving starts. NULL to skip
 																NULL,						//	invoke just after saving ends. NULL to skip
 };
 
-FILTER_DLL filter_jp = {               // Japanese UI filter info
+FILTER_DLL sdecon_en = {               // English UI filter info
 	FILTER_FLAG_EX_INFORMATION | FILTER_FLAG_PRIORITY_LOWEST,	//	filter flags, use bitwise OR to add more
 																//	FILTER_FLAG_ALWAYS_ACTIVE		: フィルタを常にアクティブにします
 																//	FILTER_FLAG_CONFIG_POPUP		: 設定をポップアップメニューにします
@@ -99,100 +118,34 @@ FILTER_DLL filter_jp = {               // Japanese UI filter info
 																//	FILTER_FLAG_IMPORT				: インポートメニューを作ります
 																//	FILTER_FLAG_EXPORT				: エクスポートメニューを作ります
 																0, 0,						//	dialogbox size
-																"滑やか対比度",			//	Filter plugin name
+																PLUGIN_NAME_SDCON,			//	Filter plugin name
 																TRACK_N,					//	トラックバーの数 (0なら名前初期値等もNULLでよい)
-																jp_name,					//	slider label names in Japanese
+																en_name,					//	slider label names in English
 																track_default,				//	トラックバーの初期値郡へのポインタ
 																track_s, track_e,			//	トラックバーの数値の下限上限 (NULLなら全て0～256)
 																CHECK_N,					//	チェックボックスの数 (0なら名前初期値等もNULLでよい)
-																check_name_jp,					//	チェックボックスの名前郡へのポインタ
+																check_name_en,					//	チェックボックスの名前郡へのポインタ
 																check_default,				//	チェックボックスの初期値郡へのポインタ
-																func_proc,					//	main filter function, use NULL to skip
-																NULL,						//	initialization function, use NULL to skip
-																func_exit,						//	on-exit function, use NULL to skip
-																func_update,						//	invokes when when settings changed. use NULL to skip
+																func_proc_sd,					//	main filter function, use NULL to skip
+																func_init_sd,						//	initialization function, use NULL to skip
+																func_exit_sd,						//	on-exit function, use NULL to skip
+																func_update_sd,						//	invokes when when settings changed. use NULL to skip
 																NULL,						//	for capturing dialog's control messages. Essential if you use button or auto uncheck some checkboxes.
 																NULL, NULL,					//	Reserved. Do not use.
 																NULL,						//  pointer to extra data when FILTER_FLAG_EX_DATA is set
 																NULL,						//  extra data size
-																"滑やか対比度 0.01 by MT",
+																VERSION_STR_SDCON,
 																//  pointer or c-string for full filter info when FILTER_FLAG_EX_INFORMATION is set.
 																NULL,						//	invoke just before saving starts. NULL to skip
 																NULL,						//	invoke just after saving ends. NULL to skip
 };
 
-
-FILTER_DLL filter_cht = {               // Chinese Traditional UI filter info
-	FILTER_FLAG_EX_INFORMATION | FILTER_FLAG_PRIORITY_LOWEST,	//	filter flags, use bitwise OR to add more
-																//	FILTER_FLAG_ALWAYS_ACTIVE		: フィルタを常にアクティブにします
-																//	FILTER_FLAG_CONFIG_POPUP		: 設定をポップアップメニューにします
-																//	FILTER_FLAG_CONFIG_CHECK		: 設定をチェックボックスメニューにします
-																//	FILTER_FLAG_CONFIG_RADIO		: Only one of the checkboxes can be ticked at one time.
-																//	FILTER_FLAG_EX_DATA				: 拡張データを保存出来るようにします。
-																//	FILTER_FLAG_PRIORITY_HIGHEST	: Make this plugin highest priority(i.e. always run before other filters)
-																//	FILTER_FLAG_PRIORITY_LOWEST		: Make this plugin lowest priority
-																//	FILTER_FLAG_WINDOW_THICKFRAME	: user-draggable dialog box
-																//	FILTER_FLAG_WINDOW_SIZE			: Custom dialogbox size (size defined in argument 2 and 3)
-																//	FILTER_FLAG_DISP_FILTER			: 表示フィルタにします
-																//	FILTER_FLAG_EX_INFORMATION		: フィルタの拡張情報を設定できるようにします
-																//	FILTER_FLAG_NO_CONFIG			: 設定ウィンドウを表示しないようにします
-																//	FILTER_FLAG_AUDIO_FILTER		: オーディオフィルタにします
-																//	FILTER_FLAG_RADIO_BUTTON		: チェックボックスをラジオボタンにします
-																//	FILTER_FLAG_WINDOW_HSCROLL		: 水平スクロールバーを持つウィンドウを作ります
-																//	FILTER_FLAG_WINDOW_VSCROLL		: 垂直スクロールバーを持つウィンドウを作ります
-																//	FILTER_FLAG_IMPORT				: インポートメニューを作ります
-																//	FILTER_FLAG_EXPORT				: エクスポートメニューを作ります
-																0, 0,						//	dialogbox size
-																"順滑對比度",			//	Filter plugin name
-																TRACK_N,					//	トラックバーの数 (0なら名前初期値等もNULLでよい)
-																cht_name,					//	slider label names in Japanese
-																track_default,				//	トラックバーの初期値郡へのポインタ
-																track_s, track_e,			//	トラックバーの数値の下限上限 (NULLなら全て0～256)
-																CHECK_N,					//	チェックボックスの数 (0なら名前初期値等もNULLでよい)
-																check_name_cht,					//	チェックボックスの名前郡へのポインタ
-																check_default,				//	チェックボックスの初期値郡へのポインタ
-																func_proc,					//	main filter function, use NULL to skip
-																NULL,						//	initialization function, use NULL to skip
-																func_exit,						//	on-exit function, use NULL to skip
-																func_update,						//	invokes when when settings changed. use NULL to skip
-																NULL,						//	for capturing dialog's control messages. Essential if you use button or auto uncheck some checkboxes.
-																NULL, NULL,					//	Reserved. Do not use.
-																NULL,						//  pointer to extra data when FILTER_FLAG_EX_DATA is set
-																NULL,						//  extra data size
-																"順滑對比度 0.01 by MT",
-																//  pointer or c-string for full filter info when FILTER_FLAG_EX_INFORMATION is set.
-																NULL,						//	invoke just before saving starts. NULL to skip
-																NULL,						//	invoke just after saving ends. NULL to skip
-};
-
-
+FILTER_DLL* pluginlist[] = { &scon_en, &sdecon_en };
 // Export the above filter table
-EXTERN_C  __declspec(dllexport) FILTER_DLL*  GetFilterTable(void)
+EXTERN_C  __declspec(dllexport) FILTER_DLL**  GetFilterTableList(void)
 {
-	FILTER_DLL* UITable = nullptr;
-	LPCPINFOEX cpinfo = new CPINFOEX{ 0 };
-	if (GetCPInfoEx(CP_THREAD_ACP, 0, cpinfo)) // try to get AviUtl's current codepage
-	{
-		if (cpinfo->CodePage == 932) // 932 is Japanese S-JIS; 950 is BIG5 Chinese
-		{
-			UITable = &filter_jp;
-		}
-		else if (cpinfo->CodePage == 950)
-		{
-			UITable = &filter_cht;
-		}
-		else // default to English to avoid scrambled text
-		{
-			UITable = &filter_en;
-		}
-	}
-	else // if something wrong with CP retrival, use English UI
-	{
-		UITable = &filter_en;
-	}
-	delete cpinfo;
-
-	return UITable;
+	
+	return pluginlist;
 }
 
 /**************************************************************************************/
@@ -211,7 +164,36 @@ If the FILTER_DLL struct fails to export, the plugin will not show up in AviUtl'
 */
 /**************************************************************************************/
 
-BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image manipulation function
+BOOL func_init_con(FILTER *fp)
+{
+	//if (fp->check[1] || fp->check[2] || fp->check[3]) prevIsYC_Con = false;
+	//if (prevIsYC_Con)
+	//{
+	//	ST = new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), 4096, 4096);
+	//}
+	//else
+	//{
+	//	ST = new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), 255, 255);
+	//}
+	return TRUE;
+}
+
+BOOL func_init_sd(FILTER *fp)
+{
+	//if (fp->check[1] || fp->check[2] || fp->check[3]) prevIsYC_SD = false;
+	//if (prevIsYC_SD)
+	//{
+	//	RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), 4096, 4096);
+	//}
+	//else
+	//{
+	//	RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), 255, 255);
+	//}
+	return TRUE;
+}
+
+
+BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image manipulation function
 {
 	//TODO
 	//MessageBoxExW(NULL, L"func_proc invoked!", L"DEMO", MB_OK | MB_ICONINFORMATION, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK));
@@ -228,48 +210,98 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image man
 	// The principle idea is to make change on fpip->ycp_edit, then return TRUE when done.
 
 	/* Create a sigmoid table if none exists */
+	/* Should only be called after closing and then opening a new file */
+#ifdef USECLOCK
+	if (fp->check[4]) start_con = std::chrono::steady_clock::now();
+#endif
+
 	if (!ST)
 	{
-		ST = new SigmoidTable(static_cast<float>(fp->track[0]/100.0f), static_cast<float>(fp->track[1]), 4096, 4096);
+		if (fp->check[1] || fp->check[2] || fp->check[3]) prevIsYC_Con = false;
+		int scale = (prevIsYC_Con ? 4096 : 255);
+		ST = new SigmoidTable(static_cast<float>(fp->track[0]/100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
 	}
-	/* Scan Y channel data */
-	for (int r = 0; r < fpip->h; r++)
+
+	if (prevIsYC_Con)
 	{
-		for (int c = 0; c < fpip->w; c++)
+		/* Scan Y channel data */
+		int fh = fpip->h;
+
+#pragma loop( hint_parallel(0) )
+#pragma loop( ivdep )
+		for (int r = 0; r < fh; r++)
 		{
-			PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
-			try
+			for (int c = 0; c < fpip->w; c++)
 			{
+				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
 				short new_y = static_cast<short>(ST->lookup(px->y));
 				px->y = new_y;
 			}
-			catch (std::exception e)
+		}
+	}
+	else //RGB mode
+	{
+		int fh = fpip->h;
+		int fw = fpip->w;
+#pragma loop( hint_parallel(0) )
+#pragma loop( ivdep )
+		for (int r = 0; r < fh; r++)
+		{
+			for (int c = 0; c < fw; c++)
 			{
-				continue;
+				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
+				PIXEL rgb{ 0 };
+				fp->exfunc->yc2rgb(&rgb, px, 1);
+				// transform each channel is needed
+				PIXEL t_rgb{ 0 };
+				if (fp->check[1])
+				{
+					t_rgb.r = static_cast<unsigned char>(ST->lookup(rgb.r));
+					rgb.r = t_rgb.r;
+				}
+				if (fp->check[2])
+				{
+					t_rgb.g = static_cast<unsigned char>(ST->lookup(rgb.g));
+					rgb.g = t_rgb.g;
+				}
+				if (fp->check[3])
+				{
+					t_rgb.b = static_cast<unsigned char>(ST->lookup(rgb.b));
+					rgb.b = t_rgb.b;
+				}
+				// convert back
+				fp->exfunc->rgb2yc(px, &rgb, 1);
 			}
 		}
 	}
+#ifdef USECLOCK
+	if (fp->check[4])
+	{
+		end_con = std::chrono::steady_clock::now();
+		std::chrono::duration<double> elapsed = std::chrono::duration_cast<std::chrono::duration<double>>( end_con - start_con);
+		auto sec = elapsed.count() * 1000;
+		std::string msg = "Benchmark:" + std::to_string(std::round(sec)) + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
+		SetWindowText(fp->hwnd, msg.c_str());
+		fp->exfunc->filter_window_update(fp);
+	}
+#endif
 
 	return TRUE; //TRUE to update frame image. FALSE to skip refresh.
 }
-BOOL func_init(FILTER *fp)
-{
-	//TODO
-	MessageBoxExW(NULL, L"func_init invoked!\nfunc_initを呼び出した！", L"DEMO", MB_OK | MB_ICONINFORMATION, MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN));
 
-	return TRUE;
-}
-BOOL func_exit(FILTER *fp)
+BOOL func_exit_con(FILTER *fp)
 {
 	//DO NOT PUT MessageBox here, crash the application!
 	//MessageBox(NULL, "func_exit invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
 	if (ST)
 	{
 		delete ST;
+		ST = nullptr;
 	}
+		
 	return TRUE;
 }
-BOOL func_update(FILTER *fp, int status)
+BOOL func_update_con(FILTER *fp, int status)
 {
 	//TODO
 	switch (status)
@@ -278,35 +310,92 @@ BOOL func_update(FILTER *fp, int status)
 		//MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_TRACK", "DEMO", MB_OK | MB_ICONINFORMATION);
 	{
 		if (ST) delete ST;
-		ST= new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), 4096, 4096);
+		int scale = (prevIsYC_Con ? 4096 : 255);
+		ST= new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
 	}
 		break;
 	case FILTER_UPDATE_STATUS_TRACK + 1:
 		//MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_TRACK+1", "DEMO", MB_OK | MB_ICONINFORMATION);
 	{
 		if (ST) delete ST;
-		ST = new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), 4096, 4096);
+		int scale = (prevIsYC_Con ? 4096 : 255);
+		ST = new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
 	}
 		break;
 //	case FILTER_UPDATE_STATUS_TRACK + 2:
 //		MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_TRACK+2", "DEMO", MB_OK | MB_ICONINFORMATION);
 //		break;
-	//case FILTER_UPDATE_STATUS_CHECK:
+	case FILTER_UPDATE_STATUS_CHECK:
+	{
+		if (fp->check[0] == 1)
+		{
+			fp->check[1] = 0;
+			fp->check[2] = 0;
+			fp->check[3] = 0;
+		}
+		else
+		{
+			fp->check[1] = 1;
+			fp->check[2] = 1;
+			fp->check[3] = 1;
+		}
+	}
 	//	MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_CHECK", "DEMO", MB_OK | MB_ICONINFORMATION);
-	//	break;
-	//case FILTER_UPDATE_STATUS_CHECK + 1:
+		break;
+	case FILTER_UPDATE_STATUS_CHECK + 1:
+	{
+		if (fp->check[1] == 1)
+		{
+			fp->check[0] = 0;
+		}
+		if ((fp->check[1] + fp->check[2] + fp->check[3]) == 0)
+		{
+			fp->check[0] = 1;
+		}
+	}
 	//	MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_CHECK+1", "DEMO", MB_OK | MB_ICONINFORMATION);
-	//	break;
-	//case FILTER_UPDATE_STATUS_CHECK + 2: // no effect since our 3rd checkbox is a button.
+		break;
+	case FILTER_UPDATE_STATUS_CHECK + 2: // no effect since our 3rd checkbox is a button.
+	{
+		if (fp->check[2] == 1)
+		{
+			fp->check[0] = 0;
+		}
+		if ((fp->check[1] + fp->check[2] + fp->check[3]) == 0)
+		{
+			fp->check[0] = 1;
+		}
+	}
 	//	MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_CHECK+2", "DEMO", MB_OK | MB_ICONINFORMATION);
-	//	break;
+		break;
+	case FILTER_UPDATE_STATUS_CHECK + 3: // no effect since our 3rd checkbox is a button.
+	{
+		if (fp->check[3] == 1)
+		{
+			fp->check[0] = 0;
+		}
+		if ((fp->check[1] + fp->check[2] + fp->check[3]) == 0)
+		{
+			fp->check[0] = 1;
+		}
+	}
+	break;
 	//default:
 		//MessageBox(NULL, "func_update invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
 	}
-
-	return FALSE;
+	fp->exfunc->filter_window_update(fp);
+	bool nowYCmode = !(fp->check[1] || fp->check[2] || fp->check[3]);
+	if (nowYCmode != prevIsYC_Con)
+	{
+		
+		int scale = (nowYCmode ? 4096 : 255);
+		if (ST) delete ST;
+		ST = new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
+		prevIsYC_Con = nowYCmode;
+	}
+	return TRUE;
 }
-BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp)
+BOOL func_WndProc_con(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp)
 // This is used for capturing mouse click, button states, and getting mouse coordinates
 {
 	//
@@ -316,32 +405,267 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 		break;
 	case WM_FILTER_MAIN_MOUSE_MOVE:
 		break;
-	case WM_COMMAND: // This is for capturing dialog control's message, i.e. button-click
-		switch (wparam)
+	case WM_FILTER_FILE_CLOSE:
+	{
+		if (ST)
 		{
-		case MID_FILTER_BUTTON + 2: // This ID is the COMBINED order of checkbox and button.
-									// so MID_FILTER_BUTTON = checkbox1
-									// MID_FILTER_BUTTON+1 = checkbox2
-									// MID_FILTER_BUTTON+2 = button1
-									// but since the checkboxes are not buttons, the first two MID_FILTER_BUTTON have no effect.
-			MessageBoxExW(NULL, L"This should show some Chinese text\n你好嗎?", L"BUTTON-CLICK", MB_OK | MB_ICONINFORMATION, MAKELANGID(LANG_CHINESE_TRADITIONAL, SUBLANG_CHINESE_HONGKONG));
-			break;
-		default:
-			return FALSE;
-
+			delete ST;
+			ST = nullptr;
 		}
+		break;
+	}
+	//case WM_COMMAND: // This is for capturing dialog control's message, i.e. button-click
+	//	switch (wparam)
+	//	{
+	//	case MID_FILTER_BUTTON:
+	//	{
+	//		if (fp->check[0] == 1)
+	//				{
+	//					fp->check[1] = 0;
+	//					fp->check[2] = 0;
+	//					fp->check[3] = 0;
+	//				}
+	//				else
+	//				{
+	//					fp->check[1] = 1;
+	//					fp->check[2] = 1;
+	//					fp->check[3] = 1;
+	//				}
+	//	}break;
+	//	case MID_FILTER_BUTTON + 2: // This ID is the COMBINED order of checkbox and button.
+	//								// so MID_FILTER_BUTTON = checkbox1
+	//								// MID_FILTER_BUTTON+1 = checkbox2
+	//								// MID_FILTER_BUTTON+2 = button1
+	//								// but since the checkboxes are not buttons, the first two MID_FILTER_BUTTON have no effect.
+	//		MessageBoxExW(NULL, L"This should show some Chinese text\n你好嗎?", L"BUTTON-CLICK", MB_OK | MB_ICONINFORMATION, MAKELANGID(LANG_CHINESE_TRADITIONAL, SUBLANG_CHINESE_HONGKONG));
+	//		break;
+	//	default:
+	//		return FALSE;
+
+	//	}
 	}
 	return FALSE;
 }
-BOOL func_save_start(FILTER *fp, int s, int e, void *editp)
+/**********************************************************/
+
+BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image manipulation function
 {
-	//
-	MessageBox(NULL, "func_save_start invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
-	return FALSE;
+#ifdef USECLOCK
+	if (fp->check[4])
+	{
+		start_sd = std::chrono::steady_clock::now();
+	}
+#endif
+
+	/* Create a Reverse sigmoid table if none exists */
+	if (!RST)
+	{
+		if (fp->check[1] || fp->check[2] || fp->check[3]) prevIsYC_SD = false;
+		int scale = (prevIsYC_SD ? 4096 : 255);
+		RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
+	}
+
+	if (prevIsYC_SD)
+	{
+		/* Scan Y channel data */
+		int fh = fpip->h;
+
+#pragma loop( hint_parallel(0) )
+#pragma loop( ivdep )
+		for (int r = 0; r < fh; r++)
+		{
+			for (int c = 0; c < fpip->w; c++)
+			{
+				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
+				short new_y = static_cast<short>(RST->lookup(px->y));
+				px->y = new_y;
+			}
+		}
+	}
+	else //RGB mode
+	{
+		int fh = fpip->h;
+		int fw = fpip->w;
+#pragma loop( hint_parallel(0) )
+#pragma loop( ivdep )
+		for (int r = 0; r < fh; r++)
+		{
+			for (int c = 0; c < fw; c++)
+			{
+				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
+				PIXEL rgb{ 0 };
+				fp->exfunc->yc2rgb(&rgb, px, 1);
+				// transform each channel is needed
+				PIXEL t_rgb{ 0 };
+				if (fp->check[1])
+				{
+					t_rgb.r = static_cast<unsigned char>(RST->lookup(rgb.r));
+					rgb.r = t_rgb.r;
+				}
+				if (fp->check[2])
+				{
+					t_rgb.g = static_cast<unsigned char>(RST->lookup(rgb.g));
+					rgb.g = t_rgb.g;
+				}
+				if (fp->check[3])
+				{
+					t_rgb.b = static_cast<unsigned char>(RST->lookup(rgb.b));
+					rgb.b = t_rgb.b;
+				}
+				// convert back
+				fp->exfunc->rgb2yc(px, &rgb, 1);
+			}
+		}
+	}
+#ifdef USECLOCK
+	if (fp->check[4])
+	{
+		end_sd = std::chrono::steady_clock::now();
+		std::chrono::duration<double> elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end_sd - start_sd);
+		auto sec = elapsed.count()*1000.0;
+		std::string msg = "Benchmark:" + std::to_string(std::round(sec)) + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
+		SetWindowText(fp->hwnd, msg.c_str());
+		fp->exfunc->filter_window_update(fp);
+	}
+#endif
+
+	return TRUE; //TRUE to update frame image. FALSE to skip refresh.
 }
-BOOL func_save_end(FILTER *fp, void *editp)
+
+BOOL func_exit_sd(FILTER *fp)
+{
+	//DO NOT PUT MessageBox here, crash the application!
+	//MessageBox(NULL, "func_exit invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
+	if (RST)
+	{
+		delete RST;
+		RST = nullptr;
+	}
+	return TRUE;
+}
+BOOL func_update_sd(FILTER *fp, int status)
+{
+	//TODO
+	switch (status)
+	{
+	case FILTER_UPDATE_STATUS_TRACK:
+		//MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_TRACK", "DEMO", MB_OK | MB_ICONINFORMATION);
+	{
+		if (RST) delete RST;
+		int scale = (prevIsYC_SD ? 4096 : 255);
+		RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
+	}
+	break;
+	case FILTER_UPDATE_STATUS_TRACK + 1:
+		//MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_TRACK+1", "DEMO", MB_OK | MB_ICONINFORMATION);
+	{
+		if (RST) delete RST;
+		int scale = (prevIsYC_SD ? 4096 : 255);
+		RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
+	}
+	break;
+	case FILTER_UPDATE_STATUS_CHECK:
+	{
+		if (fp->check[0] == 1)
+		{
+			fp->check[1] = 0;
+			fp->check[2] = 0;
+			fp->check[3] = 0;
+		}
+		else
+		{
+			fp->check[1] = 1;
+			fp->check[2] = 1;
+			fp->check[3] = 1;
+		}
+	}
+	//	MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_CHECK", "DEMO", MB_OK | MB_ICONINFORMATION);
+	break;
+	case FILTER_UPDATE_STATUS_CHECK + 1:
+	{
+		if (fp->check[1] == 1)
+		{
+			fp->check[0] = 0;
+		}
+		if ((fp->check[1] + fp->check[2] + fp->check[3]) == 0)
+		{
+			fp->check[0] = 1;
+		}
+	}
+	//	MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_CHECK+1", "DEMO", MB_OK | MB_ICONINFORMATION);
+	break;
+	case FILTER_UPDATE_STATUS_CHECK + 2: // no effect since our 3rd checkbox is a button.
+	{
+		if (fp->check[2] == 1)
+		{
+			fp->check[0] = 0;
+		}
+		if ((fp->check[1] + fp->check[2] + fp->check[3]) == 0)
+		{
+			fp->check[0] = 1;
+		}
+	}
+	//	MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_CHECK+2", "DEMO", MB_OK | MB_ICONINFORMATION);
+	break;
+	case FILTER_UPDATE_STATUS_CHECK + 3: // no effect since our 3rd checkbox is a button.
+	{
+		if (fp->check[3] == 1)
+		{
+			fp->check[0] = 0;
+		}
+		if ((fp->check[1] + fp->check[2] + fp->check[3]) == 0)
+		{
+			fp->check[0] = 1;
+		}
+	}
+	break;
+	//default:
+	//MessageBox(NULL, "func_update invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
+	}
+	fp->exfunc->filter_window_update(fp);
+	bool nowYCmode = !(fp->check[1] || fp->check[2] || fp->check[3]);
+	if (nowYCmode != prevIsYC_SD)
+	{
+
+		int scale = (nowYCmode ? 4096 : 255);
+		if (RST) delete RST;
+		RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
+		prevIsYC_SD = nowYCmode;
+	}
+	return TRUE;
+}
+BOOL func_WndProc_sd(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp)
+// This is used for capturing mouse click, button states, and getting mouse coordinates
 {
 	//
-	MessageBox(NULL, "func_save_end invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
+	switch (message)
+	{
+	case WM_FILTER_MAIN_MOUSE_DOWN:
+		break;
+	case WM_FILTER_MAIN_MOUSE_MOVE:
+		break;
+	case WM_FILTER_FILE_CLOSE:
+	{
+		if (RST) {
+			delete RST;
+			RST = nullptr;
+		}
+		break;
+	}
+	//case WM_COMMAND: // This is for capturing dialog control's message, i.e. button-click
+	//	switch (wparam)
+	//	{
+	//	case MID_FILTER_BUTTON + 2: // This ID is the COMBINED order of checkbox and button.
+	//								// so MID_FILTER_BUTTON = checkbox1
+	//								// MID_FILTER_BUTTON+1 = checkbox2
+	//								// MID_FILTER_BUTTON+2 = button1
+	//								// but since the checkboxes are not buttons, the first two MID_FILTER_BUTTON have no effect.
+	//		MessageBoxExW(NULL, L"This should show some Chinese text\n你好嗎?", L"BUTTON-CLICK", MB_OK | MB_ICONINFORMATION, MAKELANGID(LANG_CHINESE_TRADITIONAL, SUBLANG_CHINESE_HONGKONG));
+	//		break;
+	//	default:
+	//		return FALSE;
+
+	//	}
+	}
 	return FALSE;
 }

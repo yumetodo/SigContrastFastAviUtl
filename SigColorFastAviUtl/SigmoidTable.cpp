@@ -1,6 +1,8 @@
 #include "SigmoidTable.h"
 #include <cmath>
 #include <xmmintrin.h>
+//#define NOMINMAX
+//#include <Windows.h>
 
 
 
@@ -31,4 +33,10 @@ SigmoidTable::SigmoidTable(float midtone, float strength, int bin, float multipl
 		y *= multiplier;
 		table.insert({ x, static_cast<int>(y) });
 	}
+}
+
+SigmoidTable::~SigmoidTable()
+{
+	table.clear();
+	//MessageBox(NULL, "~SigTable", "Dtor", MB_OK | MB_ICONINFORMATION);
 }

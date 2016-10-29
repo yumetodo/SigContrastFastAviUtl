@@ -15,30 +15,36 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\filter.h">
+    <ClInclude Include="filter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\LUT.h">
+    <ClInclude Include="Histogram.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\Histogram.h">
+    <ClInclude Include="LUT.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\SigmoidTable.h">
+    <ClInclude Include="SigmoidTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RSigmoidTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\sigcolorfastaviutl.cpp">
+    <ClCompile Include="Histogram.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\LUT.cpp">
+    <ClCompile Include="LUT.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\Histogram.cpp">
+    <ClCompile Include="sigcolorfastaviutl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\maverick tse%27s documents\visual studio 2015\Projects\SigColorFastAviUtl\SigColorFastAviUtl\SigmoidTable.cpp">
+    <ClCompile Include="SigmoidTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RSigmoidTable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

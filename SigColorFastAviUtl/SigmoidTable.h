@@ -5,6 +5,6 @@ class SigmoidTable :
 {
 public:
 	SigmoidTable(float midtone, float strength, int bin, float multiplier);
-	~SigmoidTable()=default;
+	~SigmoidTable();
 };
 
