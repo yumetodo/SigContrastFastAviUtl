@@ -14,14 +14,14 @@
 
 #ifdef _DEBUG
 #define PLUGIN_NAME_SCON "SContrast DEBUG"
-#define VERSION_STR_SCON "SContrast(DEBUG) v0.1 by MaverickTse"
+#define VERSION_STR_SCON "SContrast(DEBUG) v0.2 by MaverickTse"
 #define PLUGIN_NAME_SDCON "SDeContrast DEBUG"
-#define VERSION_STR_SDCON "SDeContrast(DEBUG) v0.1 by MaverickTse"
+#define VERSION_STR_SDCON "SDeContrast(DEBUG) v0.2 by MaverickTse"
 #else
 #define PLUGIN_NAME_SCON "SContrast"
-#define VERSION_STR_SCON "SContrast v0.1 by MaverickTse"
+#define VERSION_STR_SCON "SContrast v0.2 by MaverickTse"
 #define PLUGIN_NAME_SDCON "SDeContrast"
-#define VERSION_STR_SDCON "SDeContrast v0.1 by MaverickTse"
+#define VERSION_STR_SDCON "SDeContrast v0.2 by MaverickTse"
 #endif
 
 #define YSCALE 4096
