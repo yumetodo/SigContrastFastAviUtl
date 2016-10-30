@@ -273,19 +273,19 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 				if (fp->check[3])
 				{
 					//rgb->b = static_cast<unsigned char>(ST->lookup(rgb->b));
-					buf[1] = static_cast<float>(ST->lookup(buf[1]));
+					buf[1] = static_cast<float>(ST->lookup(static_cast<int>(buf[1])));
 					//rgb.b = t_rgb.b;
 				}
 				if (fp->check[2])
 				{
 					//rgb->g = static_cast<unsigned char>(ST->lookup(rgb->g));
-					buf[2] = static_cast<float>(ST->lookup(buf[2]));
+					buf[2] = static_cast<float>(ST->lookup(static_cast<int>(buf[2])));
 					//rgb.g = t_rgb.g;
 				}
 				if (fp->check[1])
 				{
 					//rgb->r = static_cast<unsigned char>(ST->lookup(rgb->r));
-					buf[3] = static_cast<float>(ST->lookup(buf[3]));
+					buf[3] = static_cast<float>(ST->lookup(static_cast<int>(buf[3])));
 					//rgb.r = t_rgb.r;
 				}
 				
