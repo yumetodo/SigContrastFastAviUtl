@@ -218,11 +218,11 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 #pragma loop( ivdep )
 		for (int r = 0; r < fh; r++)
 		{
+			PIXEL* rgb = new PIXEL;
 #pragma loop( no_vector )
 			for (int c = 0; c < fw; c++)
 			{
 				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
-				PIXEL* rgb= new PIXEL;
 				fp->exfunc->yc2rgb(rgb, px, 1);
 				// transform each channel is needed
 				//PIXEL t_rgb{ 0 };
@@ -243,8 +243,8 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 				}
 				// convert back
 				fp->exfunc->rgb2yc(px, rgb, 1);
-				delete rgb;
 			}
+			delete rgb;
 		}
 	}
 #ifdef USECLOCK
@@ -471,11 +471,11 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 #pragma loop( ivdep )
 		for (int r = 0; r < fh; r++)
 		{
+			PIXEL* rgb = new PIXEL;
 #pragma loop( no_vector )
 			for (int c = 0; c < fw; c++)
 			{
 				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
-				PIXEL* rgb = new PIXEL;
 				fp->exfunc->yc2rgb(rgb, px, 1);
 				// transform each channel is needed
 				//PIXEL t_rgb{ 0 };
@@ -496,8 +496,8 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 				}
 				// convert back
 				fp->exfunc->rgb2yc(px, rgb, 1);
-				delete rgb;
 			}
+			delete rgb;
 		}
 	}
 #ifdef USECLOCK
