@@ -196,7 +196,7 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 	if (prevIsYC_Con)
 	{
 		/* Scan Y channel data */
-		int fh = fpip->h;
+		const int fh = fpip->h;
 
 #pragma loop( hint_parallel(0) )
 #pragma loop( ivdep )
@@ -212,8 +212,8 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 	}
 	else //RGB mode
 	{
-		int fh = fpip->h;
-		int fw = fpip->w;
+		const int fh = fpip->h;
+		const int fw = fpip->w;
 #pragma loop( hint_parallel(0) )
 #pragma loop( ivdep )
 		for (int r = 0; r < fh; r++)
@@ -449,7 +449,7 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 	if (prevIsYC_SD)
 	{
 		/* Scan Y channel data */
-		int fh = fpip->h;
+		const int fh = fpip->h;
 
 #pragma loop( hint_parallel(0) )
 #pragma loop( ivdep )
@@ -465,8 +465,8 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 	}
 	else //RGB mode
 	{
-		int fh = fpip->h;
-		int fw = fpip->w;
+		const int fh = fpip->h;
+		const int fw = fpip->w;
 #pragma loop( hint_parallel(0) )
 #pragma loop( ivdep )
 		for (int r = 0; r < fh; r++)
