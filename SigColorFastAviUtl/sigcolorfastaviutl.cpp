@@ -253,7 +253,10 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 		end_con = std::chrono::steady_clock::now();
 		std::chrono::duration<double> elapsed = std::chrono::duration_cast<std::chrono::duration<double>>( end_con - start_con);
 		auto sec = elapsed.count() * 1000;
-		std::string msg = "SCon:" + std::to_string(std::round(sec)) + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
+		auto timestr = std::to_string(std::round(sec));
+		auto decimal = timestr.find('.');
+		auto cleaned = timestr.substr(0, decimal);
+		std::string msg = "SCon:" + cleaned + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
 		SetWindowText(fp->hwnd, msg.c_str());
 		fp->exfunc->filter_window_update(fp);
 	}
@@ -506,7 +509,10 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 		end_sd = std::chrono::steady_clock::now();
 		std::chrono::duration<double> elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end_sd - start_sd);
 		auto sec = elapsed.count()*1000.0;
-		std::string msg = "SDeCon:" + std::to_string(std::round(sec)) + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
+		auto timestr = std::to_string(std::round(sec));
+		auto decimal = timestr.find('.');
+		auto cleaned = timestr.substr(0, decimal);
+		std::string msg = "SDeCon:" + cleaned + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
 		SetWindowText(fp->hwnd, msg.c_str());
 		fp->exfunc->filter_window_update(fp);
 	}

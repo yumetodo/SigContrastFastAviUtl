@@ -84,6 +84,12 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <AdditionalOptions>/Qpar-report:1 %(AdditionalOptions)</AdditionalOptions>
+      <Parallelization>false</Parallelization>
+      <GenerateAlternateCodePaths>None</GenerateAlternateCodePaths>
+      <UseProcessorExtensions>SSE42</UseProcessorExtensions>
+      <Cpp0xSupport>true</Cpp0xSupport>
+      <UseIntelOptimizedHeaders>false</UseIntelOptimizedHeaders>
+      <OptimizeForWindowsApplication>true</OptimizeForWindowsApplication>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
