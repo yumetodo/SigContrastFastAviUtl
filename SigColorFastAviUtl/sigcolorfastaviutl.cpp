@@ -10,7 +10,8 @@
 #include <ratio>
 #include <string>
 #include <fstream>
-std::ofstream logfile("log.txt");
+std::ofstream logfile_sc;
+std::ofstream logfile_sd;
 #endif
 
 
@@ -40,8 +41,16 @@ int		track_s[] = { 0, 1 };	//	minimum values
 int		track_e[] = { 100, 30 };	//	maximum values
 
 											// Define checkboxes and buttons
-#define	CHECK_N	5														//	total number of check box and button
-char	*check_name_en[] = { "Y", "R", "G", "B", "Benchmark" };				//	label name
+#ifdef USECLOCK
+#	define	CHECK_N	5														//	total number of check box and button
+#else
+#	define	CHECK_N	4														//	total number of check box and button
+#endif
+char	*check_name_en[] = { "Y", "R", "G", "B"
+#ifdef USECLOCK
+, "Benchmark"
+#endif
+};				//	label name
 int		check_default[] = { 1, 0, 0, 0 };				//	for checkbox: 0(unchecked) or 1(checked); for button: must be -1
 
 //char	*check_name_jp[] = { "Y", "R", "G", "B" };				//	label name:JP
@@ -168,13 +177,17 @@ If the FILTER_DLL struct fails to export, the plugin will not show up in AviUtl'
 
 BOOL func_init_con(FILTER *fp)
 {
-	
+#ifdef USECLOCK
+	logfile_sc.open("log_sc.csv");
+#endif
 	return TRUE;
 }
 
 BOOL func_init_sd(FILTER *fp)
 {
-	
+#ifdef USECLOCK
+	logfile_sd.open("log_sd.csv");
+#endif
 	return TRUE;
 }
 
@@ -255,7 +268,7 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 	{
 		const auto end_con = ch::steady_clock::now();
 		const auto elapsed_ns = std::to_string(ch::duration_cast<ch::nanoseconds>(end_con - start_con).count());
-		logfile << "SCon," + elapsed_ns << std::endl;
+		logfile_sc << "SCon," + elapsed_ns << std::endl;
 	}
 #endif
 
@@ -500,7 +513,7 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 	{
 		const auto end_sd = ch::steady_clock::now();
 		const auto elapsed_ns = std::to_string(ch::duration_cast<ch::nanoseconds>(end_sd - start_sd).count());
-		logfile << "SDeCon," + elapsed_ns << std::endl;
+		logfile_sd << "SDeCon," + elapsed_ns << std::endl;
 	}
 #endif
 
