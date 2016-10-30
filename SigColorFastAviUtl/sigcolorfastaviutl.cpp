@@ -330,9 +330,11 @@ BOOL func_exit_con(FILTER *fp)
 		ST = nullptr;
 	}
 #ifdef USECLOCK
-	std::ofstream logfile_sc("log_sc.csv");
-	for (auto&& i : logbuf_sc) {
-		logfile_sc << "SCon," << i << std::endl;
+	if (!logbuf_sc.empty()) {
+		std::ofstream logfile_sc("log_sc.csv");
+		for (auto&& i : logbuf_sc) {
+			logfile_sc << "SCon," << i << std::endl;
+		}
 	}
 #endif
 	return TRUE;
@@ -635,9 +637,11 @@ BOOL func_exit_sd(FILTER *fp)
 		RST = nullptr;
 	}
 #ifdef USECLOCK
-	std::ofstream logfile_sd("log_sd.csv");
-	for (auto&& i : logbuf_sd) {
-		logfile_sd << "SDeCon," << i << std::endl;
+	if (!logbuf_sd.empty()) {
+		std::ofstream logfile_sd("log_sd.csv");
+		for (auto&& i : logbuf_sd) {
+			logfile_sd << "SDeCon," << i << std::endl;
+		}
 	}
 #endif
 	return TRUE;
