@@ -24,6 +24,18 @@
 #define VERSION_STR_SDCON "SDeContrast v0.1 by MaverickTse"
 #endif
 
+#define YSCALE 4096
+#define RGBSCALE 4096
+
+#define COEFY 1.0037736040867458, 1.0031713814217937, 1.0038646965904563
+#define COEFU 0.0009812686948862392, -0.34182057237626395, 1.7738420513779833
+#define COEFV 1.4028706125758748, -0.7126004638855613, 0.0018494308641594699
+
+#define COEFR 0.297607421875, -0.1689453125, 0.5
+#define COEFG 0.586181640625, -0.331298828125, -0.419189453125
+#define COEFB 0.11279296875, 0.5, -0.0810546875
+
+
 bool prevIsYC_Con = true;
 bool prevIsYC_SD = true;
 // Define sliders
@@ -189,11 +201,11 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 	if (!ST)
 	{
 		if (fp->check[1] || fp->check[2] || fp->check[3]) prevIsYC_Con = false;
-		int scale = (prevIsYC_Con ? 4096 : 255);
+		int scale = (prevIsYC_Con ? YSCALE : RGBSCALE);
 		ST = new SigmoidTable(static_cast<float>(fp->track[0]/100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
 	}
 
-	if (prevIsYC_Con)
+	if (!(fp->check[1] || fp->check[2] || fp->check[3]))
 	{
 		/* Scan Y channel data */
 		const int fh = fpip->h;
@@ -214,49 +226,92 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 	{
 		const int fh = fpip->h;
 		const int fw = fpip->w;
+		// Load YUV2RGB matrix
+		__m128 cy = _mm_set_ps(COEFY, 0.f);
+		__m128 cu = _mm_set_ps(COEFU, 0.f);
+		__m128 cv = _mm_set_ps(COEFV, 0.f);
+		// Load RGB2YUV matrix
+		__m128 cr = _mm_set_ps(COEFR, 0.f);
+		__m128 cg = _mm_set_ps(COEFG, 0.f);
+		__m128 cb = _mm_set_ps(COEFB, 0.f);
 #pragma loop( hint_parallel(0) )
 #pragma loop( ivdep )
 		for (int r = 0; r < fh; r++)
 		{
-			PIXEL* rgb = new PIXEL;
+			//PIXEL* rgb = new PIXEL;
+			float buf[4] = { 0 };
 #pragma loop( no_vector )
 			for (int c = 0; c < fw; c++)
 			{
 				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
-				fp->exfunc->yc2rgb(rgb, px, 1);
+				//fp->exfunc->yc2rgb(rgb, px, 1);
+				//implement our conversion
+				__m128 my = _mm_set1_ps(static_cast<float>(px->y));
+				__m128 mu = _mm_set1_ps(static_cast<float>(px->cb));
+				__m128 mv = _mm_set1_ps(static_cast<float>(px->cr));
+
+				my = _mm_mul_ps(my, cy);
+				mu = _mm_mul_ps(mu, cu);
+				mv = _mm_mul_ps(mv, cv);
+
+				my = _mm_add_ps(my, mu);
+				my = _mm_add_ps(my, mv); //result in my
+				
+				_mm_storeu_ps(buf, my); // buf: 0, b, g, r
+				// End of YUV2RGB intrinsics
+
 				// transform each channel is needed
 				//PIXEL t_rgb{ 0 };
-				if (fp->check[1])
+				if (fp->check[3])
 				{
-					rgb->r = static_cast<unsigned char>(ST->lookup(rgb->r));
-					//rgb.r = t_rgb.r;
+					//rgb->b = static_cast<unsigned char>(ST->lookup(rgb->b));
+					buf[1] = static_cast<float>(ST->lookup(buf[1]));
+					//rgb.b = t_rgb.b;
 				}
 				if (fp->check[2])
 				{
-					rgb->g = static_cast<unsigned char>(ST->lookup(rgb->g));
+					//rgb->g = static_cast<unsigned char>(ST->lookup(rgb->g));
+					buf[2] = static_cast<float>(ST->lookup(buf[2]));
 					//rgb.g = t_rgb.g;
 				}
-				if (fp->check[3])
+				if (fp->check[1])
 				{
-					rgb->b = static_cast<unsigned char>(ST->lookup(rgb->b));
-					//rgb.b = t_rgb.b;
+					//rgb->r = static_cast<unsigned char>(ST->lookup(rgb->r));
+					buf[3] = static_cast<float>(ST->lookup(buf[3]));
+					//rgb.r = t_rgb.r;
 				}
+				
+				
 				// convert back
-				fp->exfunc->rgb2yc(px, rgb, 1);
+				//fp->exfunc->rgb2yc(px, rgb, 1);
+				my = _mm_set1_ps(buf[1]);
+				mu = _mm_set1_ps(buf[2]);
+				mv = _mm_set1_ps(buf[3]);
+				my = _mm_mul_ps(my, cb);
+				mu = _mm_mul_ps(mu, cg);
+				mv = _mm_mul_ps(mv, cr);
+				my = _mm_add_ps(my, mu);
+				my = _mm_add_ps(my, mv); //result in my
+				
+				_mm_storeu_ps(buf, my); // buf: 0, v, u, y
+				px->y = static_cast<short>(buf[3]);
+				px->cb = static_cast<short>(buf[2]);
+				px->cr = static_cast<short>(buf[1]);
 			}
-			delete rgb;
+			//delete rgb;
 		}
 	}
 #ifdef USECLOCK
 	if (fp->check[4])
 	{
 		end_con = std::chrono::steady_clock::now();
-		std::chrono::duration<double> elapsed = std::chrono::duration_cast<std::chrono::duration<double>>( end_con - start_con);
-		auto sec = elapsed.count() * 1000;
-		auto timestr = std::to_string(std::round(sec));
-		auto decimal = timestr.find('.');
-		auto cleaned = timestr.substr(0, decimal);
-		std::string msg = "SCon:" + cleaned + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
+		//std::chrono::duration<double> elapsed = std::chrono::duration_cast<std::chrono::duration<double>>( end_con - start_con);
+		auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end_con - start_con);
+		//auto sec = elapsed.count() * 1000;
+		//auto timestr = std::to_string(std::round(sec));
+		//auto decimal = timestr.find('.');
+		//auto cleaned = timestr.substr(0, decimal);
+		std::string msg = "SCon:" + std::to_string(elapsed.count()) + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
 		SetWindowText(fp->hwnd, msg.c_str());
 		fp->exfunc->filter_window_update(fp);
 	}
@@ -286,7 +341,8 @@ BOOL func_update_con(FILTER *fp, int status)
 		//MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_TRACK", "DEMO", MB_OK | MB_ICONINFORMATION);
 	{
 		if (ST) delete ST;
-		int scale = (prevIsYC_Con ? 4096 : 255);
+		//int scale = (prevIsYC_Con ? YSCALE : RGBSCALE);
+		int scale = YSCALE;
 		ST= new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
 	}
 		break;
@@ -294,7 +350,8 @@ BOOL func_update_con(FILTER *fp, int status)
 		//MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_TRACK+1", "DEMO", MB_OK | MB_ICONINFORMATION);
 	{
 		if (ST) delete ST;
-		int scale = (prevIsYC_Con ? 4096 : 255);
+		//int scale = (prevIsYC_Con ? YSCALE : RGBSCALE);
+		int scale = YSCALE;
 		ST = new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
 	}
 		break;
@@ -368,15 +425,15 @@ BOOL func_update_con(FILTER *fp, int status)
 		//MessageBox(NULL, "func_update invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
 	}
 	fp->exfunc->filter_window_update(fp);
-	bool nowYCmode = !(fp->check[1] || fp->check[2] || fp->check[3]);
-	if (nowYCmode != prevIsYC_Con)
-	{
-		
-		int scale = (nowYCmode ? 4096 : 255);
-		if (ST) delete ST;
-		ST = new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
-		prevIsYC_Con = nowYCmode;
-	}
+	//bool nowYCmode = !(fp->check[1] || fp->check[2] || fp->check[3]);
+	//if (nowYCmode != prevIsYC_Con)
+	//{
+	//	
+	//	int scale = (nowYCmode ? YSCALE : RGBSCALE);
+	//	if (ST) delete ST;
+	//	ST = new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
+	//	prevIsYC_Con = nowYCmode;
+	//}
 	return TRUE;
 }
 BOOL func_WndProc_con(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp)
@@ -398,6 +455,16 @@ BOOL func_WndProc_con(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, voi
 		}
 		break;
 	}
+	case WM_FILTER_EXPORT:
+	{
+		fp->check[4] = 0;
+		fp->exfunc->filter_window_update(fp);
+	}break;
+	case WM_FILTER_SAVE_START:
+	{
+		fp->check[4] = 0;
+		fp->exfunc->filter_window_update(fp);
+	}break;
 	//case WM_COMMAND: // This is for capturing dialog control's message, i.e. button-click
 	//	switch (wparam)
 	//	{
@@ -445,11 +512,12 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 	if (!RST)
 	{
 		if (fp->check[1] || fp->check[2] || fp->check[3]) prevIsYC_SD = false;
-		int scale = (prevIsYC_SD ? 4096 : 255);
+		//int scale = (prevIsYC_SD ? YSCALE : RGBSCALE);
+		int scale = YSCALE;
 		RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
 	}
 
-	if (prevIsYC_SD)
+	if (!(fp->check[1] || fp->check[2] || fp->check[3]))
 	{
 		/* Scan Y channel data */
 		const int fh = fpip->h;
@@ -470,49 +538,93 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 	{
 		const int fh = fpip->h;
 		const int fw = fpip->w;
+		// Load YUV2RGB matrix
+		__m128 cy = _mm_set_ps(COEFY, 0.f);
+		__m128 cu = _mm_set_ps(COEFU, 0.f);
+		__m128 cv = _mm_set_ps(COEFV, 0.f);
+		// Load RGB2YUV matrix
+		__m128 cr = _mm_set_ps(COEFR, 0.f);
+		__m128 cg = _mm_set_ps(COEFG, 0.f);
+		__m128 cb = _mm_set_ps(COEFB, 0.f);
 #pragma loop( hint_parallel(0) )
 #pragma loop( ivdep )
 		for (int r = 0; r < fh; r++)
 		{
-			PIXEL* rgb = new PIXEL;
+			//PIXEL* rgb = new PIXEL;
+			float buf[4] = { 0 };
 #pragma loop( no_vector )
 			for (int c = 0; c < fw; c++)
 			{
 				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
-				fp->exfunc->yc2rgb(rgb, px, 1);
+				//fp->exfunc->yc2rgb(rgb, px, 1);
+				//implement our conversion
+				__m128 my = _mm_set1_ps(static_cast<float>(px->y));
+				__m128 mu = _mm_set1_ps(static_cast<float>(px->cb));
+				__m128 mv = _mm_set1_ps(static_cast<float>(px->cr));
+
+				my = _mm_mul_ps(my, cy);
+				mu = _mm_mul_ps(mu, cu);
+				mv = _mm_mul_ps(mv, cv);
+
+				my = _mm_add_ps(my, mu);
+				my = _mm_add_ps(my, mv); //result in my
+
+				_mm_storeu_ps(buf, my); // buf: 0, b, g, r
+										// End of YUV2RGB intrinsics
 				// transform each channel is needed
 				//PIXEL t_rgb{ 0 };
+				
 				if (fp->check[1])
 				{
-					rgb->r = static_cast<unsigned char>(RST->lookup(rgb->r));
+					//rgb->r = static_cast<unsigned char>(ST->lookup(rgb->r));
+					buf[3] = static_cast<float>(RST->lookup(static_cast<int>(buf[3])));
 					//rgb.r = t_rgb.r;
 				}
 				if (fp->check[2])
 				{
-					rgb->g = static_cast<unsigned char>(RST->lookup(rgb->g));
+					//rgb->g = static_cast<unsigned char>(ST->lookup(rgb->g));
+					buf[2] = static_cast<float>(RST->lookup(static_cast<int>(buf[2])));
 					//rgb.g = t_rgb.g;
 				}
 				if (fp->check[3])
 				{
-					rgb->b = static_cast<unsigned char>(RST->lookup(rgb->b));
+					//rgb->b = static_cast<unsigned char>(ST->lookup(rgb->b));
+					buf[1] = static_cast<float>(RST->lookup(static_cast<int>(buf[1])));
 					//rgb.b = t_rgb.b;
 				}
 				// convert back
-				fp->exfunc->rgb2yc(px, rgb, 1);
+				//fp->exfunc->rgb2yc(px, rgb, 1);
+				// convert back
+				//fp->exfunc->rgb2yc(px, rgb, 1);
+				my = _mm_set1_ps(buf[1]);
+				mu = _mm_set1_ps(buf[2]);
+				mv = _mm_set1_ps(buf[3]);
+				my = _mm_mul_ps(my, cb);
+				mu = _mm_mul_ps(mu, cg);
+				mv = _mm_mul_ps(mv, cr);
+				my = _mm_add_ps(my, mu);
+				my = _mm_add_ps(my, mv); //result in my
+
+				_mm_storeu_ps(buf, my); // buf: 0, v, u, y
+				px->y = static_cast<short>(buf[3]);
+				px->cb = static_cast<short>(buf[2]);
+				px->cr = static_cast<short>(buf[1]);
 			}
-			delete rgb;
+			//delete rgb;
+			
 		}
 	}
 #ifdef USECLOCK
 	if (fp->check[4])
 	{
 		end_sd = std::chrono::steady_clock::now();
-		std::chrono::duration<double> elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end_sd - start_sd);
-		auto sec = elapsed.count()*1000.0;
-		auto timestr = std::to_string(std::round(sec));
-		auto decimal = timestr.find('.');
-		auto cleaned = timestr.substr(0, decimal);
-		std::string msg = "SDeCon:" + cleaned + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
+		//std::chrono::duration<double> elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end_sd - start_sd);
+		auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end_sd - start_sd);
+		//auto sec = elapsed.count()*1000.0;
+		//auto timestr = std::to_string(std::round(sec));
+		//auto decimal = timestr.find('.');
+		//auto cleaned = timestr.substr(0, decimal);
+		std::string msg = "SDeCon:" + std::to_string(elapsed.count()) + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
 		SetWindowText(fp->hwnd, msg.c_str());
 		fp->exfunc->filter_window_update(fp);
 	}
@@ -541,7 +653,8 @@ BOOL func_update_sd(FILTER *fp, int status)
 		//MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_TRACK", "DEMO", MB_OK | MB_ICONINFORMATION);
 	{
 		if (RST) delete RST;
-		int scale = (prevIsYC_SD ? 4096 : 255);
+		//int scale = (prevIsYC_SD ? YSCALE : RGBSCALE);
+		int scale = YSCALE;
 		RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
 	}
 	break;
@@ -549,7 +662,8 @@ BOOL func_update_sd(FILTER *fp, int status)
 		//MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_TRACK+1", "DEMO", MB_OK | MB_ICONINFORMATION);
 	{
 		if (RST) delete RST;
-		int scale = (prevIsYC_SD ? 4096 : 255);
+		//int scale = (prevIsYC_SD ? YSCALE : RGBSCALE);
+		int scale = YSCALE;
 		RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
 	}
 	break;
@@ -620,15 +734,15 @@ BOOL func_update_sd(FILTER *fp, int status)
 	//MessageBox(NULL, "func_update invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
 	}
 	fp->exfunc->filter_window_update(fp);
-	bool nowYCmode = !(fp->check[1] || fp->check[2] || fp->check[3]);
+	/*bool nowYCmode = !(fp->check[1] || fp->check[2] || fp->check[3]);
 	if (nowYCmode != prevIsYC_SD)
 	{
 
-		int scale = (nowYCmode ? 4096 : 255);
+		int scale = (nowYCmode ? YSCALE : RGBSCALE);
 		if (RST) delete RST;
 		RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
 		prevIsYC_SD = nowYCmode;
-	}
+	}*/
 	return TRUE;
 }
 BOOL func_WndProc_sd(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp)
@@ -643,12 +757,22 @@ BOOL func_WndProc_sd(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void
 		break;
 	case WM_FILTER_FILE_CLOSE:
 	{
-		if (RST) {
+		/*if (RST) {
 			delete RST;
 			RST = nullptr;
-		}
+		}*/
 		break;
 	}
+	case WM_FILTER_EXPORT:
+	{
+		fp->check[4] = 0;
+		fp->exfunc->filter_window_update(fp);
+	}break;
+	case WM_FILTER_SAVE_START:
+	{
+		fp->check[4] = 0;
+		fp->exfunc->filter_window_update(fp);
+	}break;
 	//case WM_COMMAND: // This is for capturing dialog control's message, i.e. button-click
 	//	switch (wparam)
 	//	{
