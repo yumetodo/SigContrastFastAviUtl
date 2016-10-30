@@ -10,8 +10,10 @@
 #include <ratio>
 #include <string>
 #include <fstream>
-std::ofstream logfile_sc;
-std::ofstream logfile_sd;
+#include <deque>
+namespace ch = std::chrono;
+std::deque<ch::nanoseconds::rep> logbuf_sc;
+std::deque<ch::nanoseconds::rep> logbuf_sd;
 #endif
 
 
@@ -67,10 +69,6 @@ int		check_default[] = { 1, 0, 0, 0 };				//	for checkbox: 0(unchecked) or 1(che
 
 //char	*check_name_jp[] = { "Y", "R", "G", "B" };				//	label name:JP
 //char	*check_name_cht[] = { "Y", "R", "G", "B" };				//	label name:CHT
-
-#ifdef USECLOCK
-namespace ch = std::chrono;
-#endif
 
 SigmoidTable* ST = nullptr;
 RSigmoidTable* RST = nullptr;
@@ -189,17 +187,11 @@ If the FILTER_DLL struct fails to export, the plugin will not show up in AviUtl'
 
 BOOL func_init_con(FILTER *fp)
 {
-#ifdef USECLOCK
-	logfile_sc.open("log_sc.csv");
-#endif
 	return TRUE;
 }
 
 BOOL func_init_sd(FILTER *fp)
 {
-#ifdef USECLOCK
-	logfile_sd.open("log_sd.csv");
-#endif
 	return TRUE;
 }
 
@@ -321,8 +313,7 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 	if (fp->check[4])
 	{
 		const auto end_con = ch::steady_clock::now();
-		const auto elapsed_ns = std::to_string(ch::duration_cast<ch::nanoseconds>(end_con - start_con).count());
-		logfile_sc << "SCon," + elapsed_ns << std::endl;
+		logbuf_sc.push_back(ch::duration_cast<ch::nanoseconds>(end_con - start_con).count());
 	}
 #endif
 
@@ -338,7 +329,12 @@ BOOL func_exit_con(FILTER *fp)
 		delete ST;
 		ST = nullptr;
 	}
-		
+#ifdef USECLOCK
+	std::ofstream logfile_sc("log_sc.csv");
+	for (auto&& i : logbuf_sc) {
+		logfile_sc << "SCon," << i << std::endl;
+	}
+#endif
 	return TRUE;
 }
 BOOL func_update_con(FILTER *fp, int status)
@@ -622,8 +618,7 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 	if (fp->check[4])
 	{
 		const auto end_sd = ch::steady_clock::now();
-		const auto elapsed_ns = std::to_string(ch::duration_cast<ch::nanoseconds>(end_sd - start_sd).count());
-		logfile_sd << "SDeCon," + elapsed_ns << std::endl;
+		logbuf_sd.push_back(ch::duration_cast<ch::nanoseconds>(end_sd - start_sd).count());
 	}
 #endif
 
@@ -639,6 +634,12 @@ BOOL func_exit_sd(FILTER *fp)
 		delete RST;
 		RST = nullptr;
 	}
+#ifdef USECLOCK
+	std::ofstream logfile_sd("log_sd.csv");
+	for (auto&& i : logbuf_sd) {
+		logfile_sd << "SDeCon," << i << std::endl;
+	}
+#endif
 	return TRUE;
 }
 BOOL func_update_sd(FILTER *fp, int status)
