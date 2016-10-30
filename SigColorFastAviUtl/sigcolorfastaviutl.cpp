@@ -14,14 +14,14 @@
 
 #ifdef _DEBUG
 #define PLUGIN_NAME_SCON "SContrast DEBUG"
-#define VERSION_STR_SCON "SContrast(DEBUG) v0.02 by MaverickTse"
+#define VERSION_STR_SCON "SContrast(DEBUG) v0.1 by MaverickTse"
 #define PLUGIN_NAME_SDCON "SDeContrast DEBUG"
-#define VERSION_STR_SDCON "SDeContrast(DEBUG) v0.02 by MaverickTse"
+#define VERSION_STR_SDCON "SDeContrast(DEBUG) v0.1 by MaverickTse"
 #else
 #define PLUGIN_NAME_SCON "SContrast"
-#define VERSION_STR_SCON "SContrast v0.02 by MaverickTse"
+#define VERSION_STR_SCON "SContrast v0.1 by MaverickTse"
 #define PLUGIN_NAME_SDCON "SDeContrast"
-#define VERSION_STR_SDCON "SDeContrast v0.02 by MaverickTse"
+#define VERSION_STR_SDCON "SDeContrast v0.1 by MaverickTse"
 #endif
 
 bool prevIsYC_Con = true;
@@ -166,48 +166,19 @@ If the FILTER_DLL struct fails to export, the plugin will not show up in AviUtl'
 
 BOOL func_init_con(FILTER *fp)
 {
-	//if (fp->check[1] || fp->check[2] || fp->check[3]) prevIsYC_Con = false;
-	//if (prevIsYC_Con)
-	//{
-	//	ST = new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), 4096, 4096);
-	//}
-	//else
-	//{
-	//	ST = new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), 255, 255);
-	//}
+	
 	return TRUE;
 }
 
 BOOL func_init_sd(FILTER *fp)
 {
-	//if (fp->check[1] || fp->check[2] || fp->check[3]) prevIsYC_SD = false;
-	//if (prevIsYC_SD)
-	//{
-	//	RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), 4096, 4096);
-	//}
-	//else
-	//{
-	//	RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), 255, 255);
-	//}
+	
 	return TRUE;
 }
 
 
 BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image manipulation function
 {
-	//TODO
-	//MessageBoxExW(NULL, L"func_proc invoked!", L"DEMO", MB_OK | MB_ICONINFORMATION, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK));
-	// image data at: fpip->ycp_edit
-	// scratch area, same size as ycp_edit, at: fpip->ycp_temp
-	// max image dimension (depends on AviUtl setting): fpip->max_w fpip->max_h [READ-ONLY]
-	// View port(output) dimension (changeable): fpip->w, fpip->h 
-	// a long list of utility function can be accessed under fp->exfunc->
-	// default pixel format in ycp_edit is PIXEL_YC (see filter.h for details)
-	// The idea of "stride" or "step" is not used when accessing ycp_edit data.
-	// ycp_edit is a continous arrangement of pixels with a maximum of fpip->max_w*fpip->max_h pixels
-	// size of ycp_edit and ycp_temp is therefore fpip->max_w*fpip->max_h*sizeof(PIXEL_YC)
-
-	// The principle idea is to make change on fpip->ycp_edit, then return TRUE when done.
 
 	/* Create a sigmoid table if none exists */
 	/* Should only be called after closing and then opening a new file */
@@ -247,30 +218,32 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 #pragma loop( ivdep )
 		for (int r = 0; r < fh; r++)
 		{
+#pragma loop( no_vector )
 			for (int c = 0; c < fw; c++)
 			{
 				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
-				PIXEL rgb{ 0 };
-				fp->exfunc->yc2rgb(&rgb, px, 1);
+				PIXEL* rgb= new PIXEL;
+				fp->exfunc->yc2rgb(rgb, px, 1);
 				// transform each channel is needed
-				PIXEL t_rgb{ 0 };
+				//PIXEL t_rgb{ 0 };
 				if (fp->check[1])
 				{
-					t_rgb.r = static_cast<unsigned char>(ST->lookup(rgb.r));
-					rgb.r = t_rgb.r;
+					rgb->r = static_cast<unsigned char>(ST->lookup(rgb->r));
+					//rgb.r = t_rgb.r;
 				}
 				if (fp->check[2])
 				{
-					t_rgb.g = static_cast<unsigned char>(ST->lookup(rgb.g));
-					rgb.g = t_rgb.g;
+					rgb->g = static_cast<unsigned char>(ST->lookup(rgb->g));
+					//rgb.g = t_rgb.g;
 				}
 				if (fp->check[3])
 				{
-					t_rgb.b = static_cast<unsigned char>(ST->lookup(rgb.b));
-					rgb.b = t_rgb.b;
+					rgb->b = static_cast<unsigned char>(ST->lookup(rgb->b));
+					//rgb.b = t_rgb.b;
 				}
 				// convert back
-				fp->exfunc->rgb2yc(px, &rgb, 1);
+				fp->exfunc->rgb2yc(px, rgb, 1);
+				delete rgb;
 			}
 		}
 	}
@@ -280,7 +253,7 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 		end_con = std::chrono::steady_clock::now();
 		std::chrono::duration<double> elapsed = std::chrono::duration_cast<std::chrono::duration<double>>( end_con - start_con);
 		auto sec = elapsed.count() * 1000;
-		std::string msg = "Benchmark:" + std::to_string(std::round(sec)) + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
+		std::string msg = "SCon:" + std::to_string(std::round(sec)) + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
 		SetWindowText(fp->hwnd, msg.c_str());
 		fp->exfunc->filter_window_update(fp);
 	}
@@ -368,7 +341,7 @@ BOOL func_update_con(FILTER *fp, int status)
 	}
 	//	MessageBox(NULL, "func_update FILTER_UPDATE_STATUS_CHECK+2", "DEMO", MB_OK | MB_ICONINFORMATION);
 		break;
-	case FILTER_UPDATE_STATUS_CHECK + 3: // no effect since our 3rd checkbox is a button.
+	case FILTER_UPDATE_STATUS_CHECK + 3: 
 	{
 		if (fp->check[3] == 1)
 		{
@@ -377,6 +350,14 @@ BOOL func_update_con(FILTER *fp, int status)
 		if ((fp->check[1] + fp->check[2] + fp->check[3]) == 0)
 		{
 			fp->check[0] = 1;
+		}
+	}
+	break;
+	case FILTER_UPDATE_STATUS_CHECK + 4:
+	{
+		if (fp->check[4] == 0)
+		{
+			SetWindowText(fp->hwnd, PLUGIN_NAME_SCON);
 		}
 	}
 	break;
@@ -490,30 +471,32 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 #pragma loop( ivdep )
 		for (int r = 0; r < fh; r++)
 		{
+#pragma loop( no_vector )
 			for (int c = 0; c < fw; c++)
 			{
 				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
-				PIXEL rgb{ 0 };
-				fp->exfunc->yc2rgb(&rgb, px, 1);
+				PIXEL* rgb = new PIXEL;
+				fp->exfunc->yc2rgb(rgb, px, 1);
 				// transform each channel is needed
-				PIXEL t_rgb{ 0 };
+				//PIXEL t_rgb{ 0 };
 				if (fp->check[1])
 				{
-					t_rgb.r = static_cast<unsigned char>(RST->lookup(rgb.r));
-					rgb.r = t_rgb.r;
+					rgb->r = static_cast<unsigned char>(RST->lookup(rgb->r));
+					//rgb.r = t_rgb.r;
 				}
 				if (fp->check[2])
 				{
-					t_rgb.g = static_cast<unsigned char>(RST->lookup(rgb.g));
-					rgb.g = t_rgb.g;
+					rgb->g = static_cast<unsigned char>(RST->lookup(rgb->g));
+					//rgb.g = t_rgb.g;
 				}
 				if (fp->check[3])
 				{
-					t_rgb.b = static_cast<unsigned char>(RST->lookup(rgb.b));
-					rgb.b = t_rgb.b;
+					rgb->b = static_cast<unsigned char>(RST->lookup(rgb->b));
+					//rgb.b = t_rgb.b;
 				}
 				// convert back
-				fp->exfunc->rgb2yc(px, &rgb, 1);
+				fp->exfunc->rgb2yc(px, rgb, 1);
+				delete rgb;
 			}
 		}
 	}
@@ -523,7 +506,7 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 		end_sd = std::chrono::steady_clock::now();
 		std::chrono::duration<double> elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end_sd - start_sd);
 		auto sec = elapsed.count()*1000.0;
-		std::string msg = "Benchmark:" + std::to_string(std::round(sec)) + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
+		std::string msg = "SDeCon:" + std::to_string(std::round(sec)) + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
 		SetWindowText(fp->hwnd, msg.c_str());
 		fp->exfunc->filter_window_update(fp);
 	}
@@ -616,6 +599,14 @@ BOOL func_update_sd(FILTER *fp, int status)
 		if ((fp->check[1] + fp->check[2] + fp->check[3]) == 0)
 		{
 			fp->check[0] = 1;
+		}
+	}
+	break;
+	case FILTER_UPDATE_STATUS_CHECK + 4:
+	{
+		if (fp->check[4] == 0)
+		{
+			SetWindowText(fp->hwnd, PLUGIN_NAME_SDCON);
 		}
 	}
 	break;
