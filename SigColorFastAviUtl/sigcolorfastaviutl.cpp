@@ -3,6 +3,9 @@
 #include "filter.h" //please set this to AviUtl SDK's filter.h
 #include "SigmoidTable.h"
 #include "RSigmoidTable.h"
+#include <thread>
+#include <type_traits>
+#include <vector>
 #define USECLOCK
 #ifdef USECLOCK
 #include <chrono>
@@ -176,7 +179,36 @@ BOOL func_init_sd(FILTER *fp)
 	return TRUE;
 }
 
-
+namespace parallel {
+	template<
+		typename Index, typename Func, 
+		typename RawIndexType = Index, 
+		std::enable_if_t<std::is_unsigned<Index>::value && std::is_integral<RawIndexType>::value, std::nullptr_t> = nullptr
+	>
+	void par_for(Index num, Func&& f) {
+		const unsigned int thread_num = std::thread::hardware_concurrency();
+		if (thread_num < 2) {//thread 非対応
+			f(static_cast<RawIndexType>(0), static_cast<RawIndexType>(num));
+		}
+		else {
+			const auto task_num = num / thread_num;
+			std::vector<std::thread> th;
+			th.reserve(thread_num);
+			for (unsigned int i = 0; i < thread_num; ++i) {
+				th.emplace_back(
+					std::forward<Func>(f),
+					static_cast<RawIndexType>(i * task_num),
+					static_cast<RawIndexType>(((i + 1) == thread_num) ? num : (i + 1) * task_num)
+				);
+			}
+			for (auto&& t : th) t.join();
+		}
+	}
+	template<typename Index, typename Func, std::enable_if_t<std::is_signed<Index>::value, std::nullptr_t> = nullptr>
+	void par_for(Index num, Func&& f) {
+		if (0 < num) par_for<std::uintmax_t, Func, Index, nullptr>(static_cast<std::uintmax_t>(num), std::forward<Func>(f));
+	}
+}
 BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image manipulation function
 {
 
@@ -196,56 +228,50 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 	if (prevIsYC_Con)
 	{
 		/* Scan Y channel data */
-		const int fh = fpip->h;
-
-#pragma loop( hint_parallel(0) )
-#pragma loop( ivdep )
-		for (int r = 0; r < fh; r++)
-		{
-			for (int c = 0; c < fpip->w; c++)
+		parallel::par_for(fpip->h, [fpip](int begin, int end) {
+			for (int r = begin; r < end; r++)
 			{
-				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
-				short new_y = static_cast<short>(ST->lookup(px->y));
-				px->y = new_y;
+				for (int c = 0; c < fpip->w; c++)
+				{
+					PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
+					const short new_y = static_cast<short>(ST->lookup(px->y));
+					px->y = new_y;
+				}
 			}
-		}
+		});
 	}
 	else //RGB mode
 	{
-		const int fh = fpip->h;
-		const int fw = fpip->w;
-#pragma loop( hint_parallel(0) )
-#pragma loop( ivdep )
-		for (int r = 0; r < fh; r++)
-		{
-			PIXEL* rgb = new PIXEL;
-#pragma loop( no_vector )
-			for (int c = 0; c < fw; c++)
+		parallel::par_for(fpip->h, [fpip, fp](int begin, int end) {
+			PIXEL rgb;
+			for (int r = begin; r < end; r++)
 			{
-				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
-				fp->exfunc->yc2rgb(rgb, px, 1);
-				// transform each channel is needed
-				//PIXEL t_rgb{ 0 };
-				if (fp->check[1])
+				for (int c = 0; c < fpip->w; c++)
 				{
-					rgb->r = static_cast<unsigned char>(ST->lookup(rgb->r));
-					//rgb.r = t_rgb.r;
+					PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
+					fp->exfunc->yc2rgb(&rgb, px, 1);
+					// transform each channel is needed
+					//PIXEL t_rgb{ 0 };
+					if (fp->check[1])
+					{
+						rgb.r = static_cast<unsigned char>(ST->lookup(rgb.r));
+						//rgb.r = t_rgb.r;
+					}
+					if (fp->check[2])
+					{
+						rgb.g = static_cast<unsigned char>(ST->lookup(rgb.g));
+						//rgb.g = t_rgb.g;
+					}
+					if (fp->check[3])
+					{
+						rgb.b = static_cast<unsigned char>(ST->lookup(rgb.b));
+						//rgb.b = t_rgb.b;
+					}
+					// convert back
+					fp->exfunc->rgb2yc(px, &rgb, 1);
 				}
-				if (fp->check[2])
-				{
-					rgb->g = static_cast<unsigned char>(ST->lookup(rgb->g));
-					//rgb.g = t_rgb.g;
-				}
-				if (fp->check[3])
-				{
-					rgb->b = static_cast<unsigned char>(ST->lookup(rgb->b));
-					//rgb.b = t_rgb.b;
-				}
-				// convert back
-				fp->exfunc->rgb2yc(px, rgb, 1);
 			}
-			delete rgb;
-		}
+		});
 	}
 #ifdef USECLOCK
 	if (fp->check[4])
@@ -452,56 +478,51 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 	if (prevIsYC_SD)
 	{
 		/* Scan Y channel data */
-		const int fh = fpip->h;
-
-#pragma loop( hint_parallel(0) )
-#pragma loop( ivdep )
-		for (int r = 0; r < fh; r++)
-		{
-			for (int c = 0; c < fpip->w; c++)
+		parallel::par_for(fpip->h, [fpip](int begin, int end) {
+			for (int r = begin; r < end; r++)
 			{
-				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
-				short new_y = static_cast<short>(RST->lookup(px->y));
-				px->y = new_y;
+				for (int c = 0; c < fpip->w; c++)
+				{
+					PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
+					const short new_y = static_cast<short>(RST->lookup(px->y));
+					px->y = new_y;
+				}
 			}
-		}
+		});
 	}
 	else //RGB mode
 	{
-		const int fh = fpip->h;
-		const int fw = fpip->w;
-#pragma loop( hint_parallel(0) )
-#pragma loop( ivdep )
-		for (int r = 0; r < fh; r++)
-		{
-			PIXEL* rgb = new PIXEL;
-#pragma loop( no_vector )
-			for (int c = 0; c < fw; c++)
+		parallel::par_for(fpip->h, [fpip, fp](int begin, int end) {
+			for (int r = begin; r < end; r++)
 			{
-				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
-				fp->exfunc->yc2rgb(rgb, px, 1);
-				// transform each channel is needed
-				//PIXEL t_rgb{ 0 };
-				if (fp->check[1])
+				PIXEL rgb;
+				for (int c = 0; c < fpip->w; c++)
 				{
-					rgb->r = static_cast<unsigned char>(RST->lookup(rgb->r));
-					//rgb.r = t_rgb.r;
+					PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
+					fp->exfunc->yc2rgb(&rgb, px, 1);
+					// transform each channel is needed
+					//PIXEL t_rgb{ 0 };
+					if (fp->check[1])
+					{
+						rgb.r = static_cast<unsigned char>(RST->lookup(rgb.r));
+						//rgb.r = t_rgb.r;
+					}
+					if (fp->check[2])
+					{
+						rgb.g = static_cast<unsigned char>(RST->lookup(rgb.g));
+						//rgb.g = t_rgb.g;
+					}
+					if (fp->check[3])
+					{
+						rgb.b = static_cast<unsigned char>(RST->lookup(rgb.b));
+						//rgb.b = t_rgb.b;
+					}
+					// convert back
+					fp->exfunc->rgb2yc(px, &rgb, 1);
 				}
-				if (fp->check[2])
-				{
-					rgb->g = static_cast<unsigned char>(RST->lookup(rgb->g));
-					//rgb.g = t_rgb.g;
-				}
-				if (fp->check[3])
-				{
-					rgb->b = static_cast<unsigned char>(RST->lookup(rgb->b));
-					//rgb.b = t_rgb.b;
-				}
-				// convert back
-				fp->exfunc->rgb2yc(px, rgb, 1);
 			}
-			delete rgb;
-		}
+
+		});
 	}
 #ifdef USECLOCK
 	if (fp->check[4])
