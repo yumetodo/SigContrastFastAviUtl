@@ -105,7 +105,7 @@ FILTER_DLL scon_en = {               // English UI filter info
 																NULL,						//  extra data size
 																VERSION_STR_SCON,
 																//  pointer or c-string for full filter info when FILTER_FLAG_EX_INFORMATION is set.
-																NULL,						//	invoke just before saving starts. NULL to skip
+																func_save_start_con,						//	invoke just before saving starts. NULL to skip
 																NULL,						//	invoke just after saving ends. NULL to skip
 };
 
@@ -148,7 +148,7 @@ FILTER_DLL sdecon_en = {               // English UI filter info
 																NULL,						//  extra data size
 																VERSION_STR_SDCON,
 																//  pointer or c-string for full filter info when FILTER_FLAG_EX_INFORMATION is set.
-																NULL,						//	invoke just before saving starts. NULL to skip
+																func_save_start_sd,						//	invoke just before saving starts. NULL to skip
 																NULL,						//	invoke just after saving ends. NULL to skip
 };
 
@@ -789,4 +789,15 @@ BOOL func_WndProc_sd(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void
 	//	}
 	}
 	return FALSE;
+}
+
+BOOL func_save_start_con(FILTER *fp, int s, int e, void *editp)
+{
+	fp->check[4] = 0;
+	return TRUE;
+}
+BOOL func_save_start_sd(FILTER *fp, int s, int e, void *editp)
+{
+	fp->check[4] = 0;
+	return TRUE;
 }
