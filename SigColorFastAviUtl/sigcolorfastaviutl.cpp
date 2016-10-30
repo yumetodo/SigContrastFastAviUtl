@@ -9,6 +9,8 @@
 #include <ctime>
 #include <ratio>
 #include <string>
+#include <fstream>
+std::ofstream logfile("log.txt");
 #endif
 
 
@@ -46,7 +48,7 @@ int		check_default[] = { 1, 0, 0, 0 };				//	for checkbox: 0(unchecked) or 1(che
 //char	*check_name_cht[] = { "Y", "R", "G", "B" };				//	label name:CHT
 
 #ifdef USECLOCK
-std::chrono::time_point<std::chrono::steady_clock> start_con, end_con, start_sd, end_sd;
+namespace ch = std::chrono;
 #endif
 
 SigmoidTable* ST = nullptr;
@@ -183,7 +185,8 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 	/* Create a sigmoid table if none exists */
 	/* Should only be called after closing and then opening a new file */
 #ifdef USECLOCK
-	if (fp->check[4]) start_con = std::chrono::steady_clock::now();
+	ch::time_point<ch::steady_clock> start_con;
+	if (fp->check[4]) start_con = ch::steady_clock::now();
 #endif
 
 	if (!ST)
@@ -250,15 +253,9 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 #ifdef USECLOCK
 	if (fp->check[4])
 	{
-		end_con = std::chrono::steady_clock::now();
-		std::chrono::duration<double> elapsed = std::chrono::duration_cast<std::chrono::duration<double>>( end_con - start_con);
-		auto sec = elapsed.count() * 1000;
-		auto timestr = std::to_string(std::round(sec));
-		auto decimal = timestr.find('.');
-		auto cleaned = timestr.substr(0, decimal);
-		std::string msg = "SCon:" + cleaned + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
-		SetWindowText(fp->hwnd, msg.c_str());
-		fp->exfunc->filter_window_update(fp);
+		const auto end_con = ch::steady_clock::now();
+		const auto elapsed_ns = std::to_string(ch::duration_cast<ch::nanoseconds>(end_con - start_con).count());
+		logfile << "SCon," + elapsed_ns << std::endl;
 	}
 #endif
 
@@ -358,10 +355,7 @@ BOOL func_update_con(FILTER *fp, int status)
 	break;
 	case FILTER_UPDATE_STATUS_CHECK + 4:
 	{
-		if (fp->check[4] == 0)
-		{
-			SetWindowText(fp->hwnd, PLUGIN_NAME_SCON);
-		}
+		SetWindowText(fp->hwnd, PLUGIN_NAME_SCON);
 	}
 	break;
 	//default:
@@ -435,10 +429,8 @@ BOOL func_WndProc_con(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, voi
 BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image manipulation function
 {
 #ifdef USECLOCK
-	if (fp->check[4])
-	{
-		start_sd = std::chrono::steady_clock::now();
-	}
+	ch::time_point<ch::steady_clock> start_sd;
+	if (fp->check[4]) start_sd = ch::steady_clock::now();
 #endif
 
 	/* Create a Reverse sigmoid table if none exists */
@@ -506,15 +498,9 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 #ifdef USECLOCK
 	if (fp->check[4])
 	{
-		end_sd = std::chrono::steady_clock::now();
-		std::chrono::duration<double> elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end_sd - start_sd);
-		auto sec = elapsed.count()*1000.0;
-		auto timestr = std::to_string(std::round(sec));
-		auto decimal = timestr.find('.');
-		auto cleaned = timestr.substr(0, decimal);
-		std::string msg = "SDeCon:" + cleaned + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h);
-		SetWindowText(fp->hwnd, msg.c_str());
-		fp->exfunc->filter_window_update(fp);
+		const auto end_sd = ch::steady_clock::now();
+		const auto elapsed_ns = std::to_string(ch::duration_cast<ch::nanoseconds>(end_sd - start_sd).count());
+		logfile << "SDeCon," + elapsed_ns << std::endl;
 	}
 #endif
 
@@ -610,10 +596,7 @@ BOOL func_update_sd(FILTER *fp, int status)
 	break;
 	case FILTER_UPDATE_STATUS_CHECK + 4:
 	{
-		if (fp->check[4] == 0)
-		{
-			SetWindowText(fp->hwnd, PLUGIN_NAME_SDCON);
-		}
+		SetWindowText(fp->hwnd, PLUGIN_NAME_SDCON);
 	}
 	break;
 	//default:
