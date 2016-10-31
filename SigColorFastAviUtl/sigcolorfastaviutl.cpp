@@ -52,7 +52,7 @@ int		track_e[] = { 100, 30 };	//	maximum values
 											// Define checkboxes and buttons
 #define	CHECK_N	5														//	total number of check box and button
 char	*check_name_en[] = { "Y", "R", "G", "B", "Benchmark" };				//	label name
-int		check_default[] = { 1, 0, 0, 0 };				//	for checkbox: 0(unchecked) or 1(checked); for button: must be -1
+int		check_default[] = { 1, 0, 0, 0, 0 };				//	for checkbox: 0(unchecked) or 1(checked); for button: must be -1
 
 //char	*check_name_jp[] = { "Y", "R", "G", "B" };				//	label name:JP
 //char	*check_name_cht[] = { "Y", "R", "G", "B" };				//	label name:CHT
@@ -152,9 +152,9 @@ FILTER_DLL sdecon_en = {               // English UI filter info
 																NULL,						//	invoke just after saving ends. NULL to skip
 };
 
-FILTER_DLL* pluginlist[] = { &scon_en, &sdecon_en };
+FILTER_DLL* pluginlist[] = { &scon_en, &sdecon_en, nullptr };
 // Export the above filter table
-EXTERN_C  __declspec(dllexport) FILTER_DLL**  GetFilterTableList(void)
+EXTERN_C  __declspec(dllexport) FILTER_DLL** GetFilterTableList(void)
 {
 	
 	return pluginlist;
