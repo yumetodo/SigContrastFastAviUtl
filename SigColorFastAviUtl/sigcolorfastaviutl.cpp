@@ -228,13 +228,14 @@ namespace parallel {
 		}
 		else {
 			const auto task_num = num / thread_num;
+			const auto task_rest = num % thread_num;
 			std::vector<std::thread> th;
 			th.reserve(thread_num);
 			for (unsigned int i = 0; i < thread_num; ++i) {
 				th.emplace_back(
 					std::forward<Func>(f),
-					static_cast<RawIndexType>(i * task_num),
-					static_cast<RawIndexType>(((i + 1) == thread_num) ? num : (i + 1) * task_num)
+					static_cast<RawIndexType>((i) ? i * task_num + task_rest : 0),
+					static_cast<RawIndexType>((i + 1) * task_num + task_rest)
 				);
 			}
 			for (auto&& t : th) t.join();
