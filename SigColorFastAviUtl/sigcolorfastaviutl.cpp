@@ -57,11 +57,12 @@ int		track_e[] = { 100, 30, 0 };	//	maximum values
 											// Define checkboxes and buttons
 #ifdef USECLOCK
 static inline void disable_echo_benchmark(FILTER *fp) {
-	const auto s = "disable_echo_benchmark fp->check[6]:" + std::to_string(fp->check[6]);
 #if defined(_MSC_VER) && defined(_DEBUG)
+	using namespace std::string_literals;
+	const auto s = fp->name + "::disable_echo_benchmark fp->check[6]:"s + std::to_string(fp->check[6]) + '\n';
 	OutputDebugStringA(s.c_str());
 #endif
-	if (!fp->check[6]) {
+	if (fp->check[6]) {
 		fp->check[4] = fp->check[5] = 0;//disable benchmark
 		fp->exfunc->filter_window_update(fp);
 	}
