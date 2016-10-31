@@ -175,9 +175,9 @@ FILTER_DLL sdecon_en = {               // English UI filter info
 																NULL,						//	invoke just after saving ends. NULL to skip
 };
 
-FILTER_DLL* pluginlist[] = { &scon_en, &sdecon_en };
+FILTER_DLL* pluginlist[] = { &scon_en, &sdecon_en, nullptr };
 // Export the above filter table
-EXTERN_C  __declspec(dllexport) FILTER_DLL**  GetFilterTableList(void)
+EXTERN_C  __declspec(dllexport) FILTER_DLL** GetFilterTableList(void)
 {
 	
 	return pluginlist;
