@@ -46,13 +46,13 @@ bool prevIsYC_SD = true;
 // Define sliders
 #define	TRACK_N	2 //	slider count. This creates 3 sliders
 // i18n slider name
-char* en_name[] = { "Midtone", "Strength", nullptr };
+char* en_name[] = { "Midtone", "Strength" };
 //char* jp_name[] = { "中間値", "強さ" };
 //char* cht_name[] = { "中間值", "強度" };
 
-int		track_default[] = { 50, 5, 0 };	//	default values
-int		track_s[] = { 0, 1, 0 };	//	minimum values
-int		track_e[] = { 100, 30, 0 };	//	maximum values
+int		track_default[] = { 50, 5 };	//	default values
+int		track_s[] = { 0, 1 };	//	minimum values
+int		track_e[] = { 100, 30 };	//	maximum values
 
 											// Define checkboxes and buttons
 #ifdef USECLOCK
@@ -71,20 +71,16 @@ static inline void disable_echo_benchmark(FILTER *fp) {
 #else
 #	define	CHECK_N	4														//	total number of check box and button
 #endif
-char	*check_name_en[CHECK_N + 1] = { 
+char	*check_name_en[CHECK_N] = { 
 	"Y", "R", "G", "B"
 #ifdef USECLOCK
-	, "echo benchmark", "save benchmark", "disable benchmark when export", nullptr
-#else
-	, nullptr
+	, "echo benchmark", "save benchmark", "disable benchmark when export"
 #endif
 };				//	label name
-int		check_default[CHECK_N + 1] = {
+int		check_default[CHECK_N] = {
 	1, 0, 0, 0
 #ifdef USECLOCK
-	,1,0,1,0
-#else
-	,0
+	,1,0,1
 #endif
 };				//	for checkbox: 0(unchecked) or 1(checked); for button: must be -1
 static_assert((sizeof(check_name_en) / sizeof(*check_name_en)) == (sizeof(check_default) / sizeof(*check_default)), "error");
