@@ -56,17 +56,31 @@ int		track_e[] = { 100, 30 };	//	maximum values
 
 											// Define checkboxes and buttons
 #ifdef USECLOCK
-#	define	CHECK_N	5														//	total number of check box and button
+static inline void disable_echo_benchmark(FILTER *fp) {
+	const auto s = "disable_echo_benchmark fp->check[6]:" + std::to_string(fp->check[6]);
+#if defined(_MSC_VER) && defined(_DEBUG)
+	OutputDebugStringA(s.c_str());
+#endif
+	if (!fp->check[6]) {
+		fp->check[4] = fp->check[5] = 0;//disable benchmark
+		fp->exfunc->filter_window_update(fp);
+	}
+}
+#	define	CHECK_N	7														//	total number of check box and button
 #else
 #	define	CHECK_N	4														//	total number of check box and button
 #endif
-char	*check_name_en[] = { "Y", "R", "G", "B"
+char	*check_name_en[CHECK_N] = { "Y", "R", "G", "B"
 #ifdef USECLOCK
-, "Benchmark"
+, "echo benchmark", "save benchmark", "disable benchmark when export"
 #endif
 };				//	label name
-int		check_default[] = { 1, 0, 0, 0 };				//	for checkbox: 0(unchecked) or 1(checked); for button: must be -1
-
+int		check_default[CHECK_N] = { 1, 0, 0, 0
+#ifdef USECLOCK
+,1,0,1
+#endif
+};				//	for checkbox: 0(unchecked) or 1(checked); for button: must be -1
+static_assert((sizeof(check_name_en) / sizeof(*check_name_en)) == (sizeof(check_default) / sizeof(*check_default)), "error");
 //char	*check_name_jp[] = { "Y", "R", "G", "B" };				//	label name:JP
 //char	*check_name_cht[] = { "Y", "R", "G", "B" };				//	label name:CHT
 
@@ -203,7 +217,7 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 	/* Should only be called after closing and then opening a new file */
 #ifdef USECLOCK
 	ch::time_point<ch::steady_clock> start_con;
-	if (fp->check[4]) start_con = ch::steady_clock::now();
+	if (fp->check[4] || fp->check[5]) start_con = ch::steady_clock::now();
 #endif
 
 	if (!ST)
@@ -310,10 +324,23 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 		}
 	}
 #ifdef USECLOCK
-	if (fp->check[4])
+	if (fp->check[4] || fp->check[5])
 	{
 		const auto end_con = ch::steady_clock::now();
-		logbuf_sc.push_back(ch::duration_cast<ch::nanoseconds>(end_con - start_con).count());
+		const auto elapsed = end_con - start_con;
+		if (fp->check[4]) {
+			using namespace std::chrono_literals;//UDLs : ms
+			static auto last_echo_time = end_con;
+			if (last_echo_time == end_con || last_echo_time + 150ms < end_con) {
+				const auto elapsed_s = std::to_string(ch::duration_cast<ch::milliseconds>(elapsed).count());
+				SetWindowText(fp->hwnd, ("SCon:" + elapsed_s + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
+				fp->exfunc->filter_window_update(fp);
+				last_echo_time = end_con;
+			}
+		}
+		if (fp->check[5]) {
+			logbuf_sd.push_back(ch::duration_cast<ch::nanoseconds>(elapsed).count());
+		}
 	}
 #endif
 
@@ -420,11 +447,13 @@ BOOL func_update_con(FILTER *fp, int status)
 		}
 	}
 	break;
+#ifdef USECLOCK
 	case FILTER_UPDATE_STATUS_CHECK + 4:
 	{
-		SetWindowText(fp->hwnd, PLUGIN_NAME_SCON);
+		if(0 == fp->check[4]) SetWindowText(fp->hwnd, PLUGIN_NAME_SCON);
 	}
 	break;
+#endif
 	//default:
 		//MessageBox(NULL, "func_update invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
 	}
@@ -459,16 +488,12 @@ BOOL func_WndProc_con(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, voi
 		}
 		break;
 	}
+#ifdef USECLOCK
 	case WM_FILTER_EXPORT:
-	{
-		fp->check[4] = 0;
-		fp->exfunc->filter_window_update(fp);
-	}break;
 	case WM_FILTER_SAVE_START:
-	{
-		fp->check[4] = 0;
-		fp->exfunc->filter_window_update(fp);
-	}break;
+		disable_echo_benchmark(fp);
+		break;
+#endif
 	//case WM_COMMAND: // This is for capturing dialog control's message, i.e. button-click
 	//	switch (wparam)
 	//	{
@@ -507,7 +532,7 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 {
 #ifdef USECLOCK
 	ch::time_point<ch::steady_clock> start_sd;
-	if (fp->check[4]) start_sd = ch::steady_clock::now();
+	if (fp->check[4] || fp->check[5]) start_sd = ch::steady_clock::now();
 #endif
 
 	/* Create a Reverse sigmoid table if none exists */
@@ -617,10 +642,23 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 		}
 	}
 #ifdef USECLOCK
-	if (fp->check[4])
+	if (fp->check[4] || fp->check[5])
 	{
 		const auto end_sd = ch::steady_clock::now();
-		logbuf_sd.push_back(ch::duration_cast<ch::nanoseconds>(end_sd - start_sd).count());
+		const auto elapsed = end_sd - start_sd;
+		if (fp->check[4]) {
+			using namespace std::chrono_literals;//UDLs : ms
+			static auto last_echo_time = end_sd;
+			if (last_echo_time == end_sd || last_echo_time + 150ms < end_sd) {
+				const auto elapsed_s = std::to_string(ch::duration_cast<ch::milliseconds>(elapsed).count());
+				SetWindowText(fp->hwnd, ("SDeCon:" + elapsed_s + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
+				fp->exfunc->filter_window_update(fp);
+				last_echo_time = end_sd;
+			}
+		}
+		if (fp->check[5]) {
+			logbuf_sd.push_back(ch::duration_cast<ch::nanoseconds>(elapsed).count());
+		}
 	}
 #endif
 
@@ -724,11 +762,13 @@ BOOL func_update_sd(FILTER *fp, int status)
 		}
 	}
 	break;
+#ifdef USECLOCK
 	case FILTER_UPDATE_STATUS_CHECK + 4:
 	{
-		SetWindowText(fp->hwnd, PLUGIN_NAME_SDCON);
+		if (0 == fp->check[4]) SetWindowText(fp->hwnd, PLUGIN_NAME_SDCON);
 	}
 	break;
+#endif
 	//default:
 	//MessageBox(NULL, "func_update invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
 	}
@@ -762,16 +802,12 @@ BOOL func_WndProc_sd(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void
 		}*/
 		break;
 	}
+#ifdef USECLOCK
 	case WM_FILTER_EXPORT:
-	{
-		fp->check[4] = 0;
-		fp->exfunc->filter_window_update(fp);
-	}break;
 	case WM_FILTER_SAVE_START:
-	{
-		fp->check[4] = 0;
-		fp->exfunc->filter_window_update(fp);
-	}break;
+		disable_echo_benchmark(fp);
+		break;
+#endif
 	//case WM_COMMAND: // This is for capturing dialog control's message, i.e. button-click
 	//	switch (wparam)
 	//	{
@@ -792,11 +828,15 @@ BOOL func_WndProc_sd(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void
 
 BOOL func_save_start_con(FILTER *fp, int s, int e, void *editp)
 {
-	fp->check[4] = 0;
+#ifdef USECLOCK
+	disable_echo_benchmark(fp);
+#endif
 	return TRUE;
 }
 BOOL func_save_start_sd(FILTER *fp, int s, int e, void *editp)
 {
-	fp->check[4] = 0;
+#ifdef USECLOCK
+	disable_echo_benchmark(fp);
+#endif
 	return TRUE;
 }
