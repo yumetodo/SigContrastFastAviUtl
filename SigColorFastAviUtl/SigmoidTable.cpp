@@ -1,4 +1,4 @@
-#include "SigmoidTable.h"
+﻿#include "SigmoidTable.h"
 #include <cmath>
 #include <xmmintrin.h>
 //#define NOMINMAX

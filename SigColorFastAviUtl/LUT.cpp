@@ -1,4 +1,4 @@
-#include "LUT.h"
+﻿#include "LUT.h"
 //#define NOMINMAX
 //#include <Windows.h>
 

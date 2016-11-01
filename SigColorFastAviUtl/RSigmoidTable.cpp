@@ -1,4 +1,4 @@
-#include "RSigmoidTable.h"
+﻿#include "RSigmoidTable.h"
 #include <xmmintrin.h>
 //#define NOMINMAX
 //#include <Windows.h>

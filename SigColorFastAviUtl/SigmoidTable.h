@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "LUT.h"
 class SigmoidTable :
 	public LUT
