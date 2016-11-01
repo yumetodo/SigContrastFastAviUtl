@@ -30,6 +30,9 @@
     <ClInclude Include="RSigmoidTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="thread.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Histogram.cpp">
