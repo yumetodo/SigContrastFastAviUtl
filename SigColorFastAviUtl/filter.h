@@ -959,7 +959,8 @@ BOOL func_WndProc_sd(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void
 BOOL func_save_start_con(FILTER *fp, int s, int e, void *editp);
 BOOL func_save_start_sd(FILTER *fp, int s, int e, void *editp);
 
-BOOL func_save_end(FILTER *fp, void *editp);
+BOOL func_save_end_con(FILTER *fp, void *editp);
+BOOL func_save_end_sd(FILTER *fp, void *editp);
 BOOL func_is_saveframe(FILTER *fp, void *editp, int saveno, int frame, int fps, int edit_flag, int inter);
 BOOL func_project_load(FILTER *fp, void *editp, void *data, int size);
 BOOL func_project_save(FILTER *fp, void *editp, void *data, int *size);
