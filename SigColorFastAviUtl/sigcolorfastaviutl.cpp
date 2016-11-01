@@ -207,7 +207,7 @@ namespace parallel {
 	}
 }
 namespace color_cvt {
-	inline void yc2rgb(float(&buf)[4], const PIXEL_YC* px) {
+	inline void yc2rgb(float(&buf)[4], const PIXEL_YC* px) noexcept {
 		// Load YUV2RGB matrix
 		static const __m128 cy = _mm_set_ps(COEFY, 0.f);
 		static const __m128 cu = _mm_set_ps(COEFU, 0.f);
@@ -225,7 +225,7 @@ namespace color_cvt {
 
 		_mm_storeu_ps(buf, my); // buf: 0, b, g, r
 	}
-	inline void rgb2yc(PIXEL_YC* px, const float(&buf)[4]) {
+	inline void rgb2yc(PIXEL_YC* px, const float(&buf)[4]) noexcept {
 		// Load RGB2YUV matrix
 		static const __m128 cr = _mm_set_ps(COEFR, 0.f);
 		static const __m128 cg = _mm_set_ps(COEFG, 0.f);
