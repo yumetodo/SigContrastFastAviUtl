@@ -85,7 +85,7 @@ int		check_default[CHECK_N] = {
 static_assert((sizeof(check_name_en) / sizeof(*check_name_en)) == (sizeof(check_default) / sizeof(*check_default)), "error");
 
 SigmoidTable ST;
-RSigmoidTable* RST = nullptr;
+RSigmoidTable RST;
 
 
 													// Define filter info
@@ -410,11 +410,7 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 #endif
 
 	/* Create a Reverse sigmoid table if none exists */
-	if (!RST)
-	{
-		int scale = YSCALE;
-		RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
-	}
+	RST.change_param(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]));
 
 	if (!(fp->check[1] || fp->check[2] || fp->check[3]))
 	{
@@ -425,7 +421,7 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 				for (int c = 0; c < fpip->w; c++)
 				{
 					PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
-					const short new_y = static_cast<short>(RST->lookup(px->y));
+					const short new_y = static_cast<short>(RST.lookup(px->y));
 					px->y = new_y;
 				}
 			}
@@ -445,15 +441,15 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 					//PIXEL t_rgb{ 0 };
 					if (fp->check[1])
 					{
-						buf[3] = static_cast<float>(RST->lookup(static_cast<int>(buf[3])));
+						buf[3] = static_cast<float>(RST.lookup(buf[3]));
 					}
 					if (fp->check[2])
 					{
-						buf[2] = static_cast<float>(RST->lookup(static_cast<int>(buf[2])));
+						buf[2] = static_cast<float>(RST.lookup(buf[2]));
 					}
 					if (fp->check[3])
 					{
-						buf[1] = static_cast<float>(RST->lookup(static_cast<int>(buf[1])));
+						buf[1] = static_cast<float>(RST.lookup(buf[1]));
 					}
 					// convert back
 					color_cvt::rgb2yc(px, buf);
@@ -489,11 +485,6 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 BOOL func_exit_sd(FILTER *fp)
 {
 	//DO NOT PUT MessageBox here, crash the application!
-	if (RST)
-	{
-		delete RST;
-		RST = nullptr;
-	}
 #ifdef USECLOCK
 	if (!logbuf_sd.empty()) {
 		std::ofstream logfile_sd("log_sd.csv");
@@ -509,19 +500,9 @@ BOOL func_update_sd(FILTER *fp, int status)
 	switch (status)
 	{
 	case FILTER_UPDATE_STATUS_TRACK:
-	{
-		if (RST) delete RST;
-		int scale = YSCALE;
-		RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
-	}
-	break;
 	case FILTER_UPDATE_STATUS_TRACK + 1:
-	{
-		if (RST) delete RST;
-		int scale = YSCALE;
-		RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
-	}
-	break;
+		RST.change_param(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]));
+		break;
 	case FILTER_UPDATE_STATUS_CHECK:
 	{
 		if (fp->check[0] == 1)
