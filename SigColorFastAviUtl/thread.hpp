@@ -109,7 +109,7 @@ namespace parallel {
 	}
 	template<typename Index, typename Func, typename ...Args, std::enable_if_t<std::is_signed<Index>::value, std::nullptr_t> = nullptr>
 	inline void par_for(Index num, Func&& f, Args&& ...args) {
-		if (0 < num) par_for<std::uintmax_t, Func, Index, Args..., nullptr>(static_cast<std::uintmax_t>(num), std::forward<Func>(f), std::forward<Args>(args)...);
+		if (0 < num) par_for<std::uintmax_t, Func, Index, Args...>(static_cast<std::uintmax_t>(num), std::forward<Func>(f), std::forward<Args>(args)...);
 	}
 	template<
 		typename Index, typename Func,
