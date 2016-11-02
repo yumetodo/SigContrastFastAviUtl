@@ -18,9 +18,6 @@
     <ClInclude Include="filter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Histogram.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="LUT.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -38,9 +35,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Histogram.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="LUT.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

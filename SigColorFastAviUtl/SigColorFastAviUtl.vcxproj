@@ -101,7 +101,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="filter.h" />
-    <ClInclude Include="Histogram.h" />
     <ClInclude Include="LUT.h" />
     <ClInclude Include="RSigmoidTable.h" />
     <ClInclude Include="sigmoid.hpp" />
@@ -109,7 +108,6 @@
     <ClInclude Include="thread.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Histogram.cpp" />
     <ClCompile Include="LUT.cpp" />
     <ClCompile Include="RSigmoidTable.cpp" />
     <ClCompile Include="sigcolorfastaviutl.cpp" />
