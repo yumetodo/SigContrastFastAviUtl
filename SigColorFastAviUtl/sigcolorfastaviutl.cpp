@@ -84,7 +84,7 @@ int		check_default[CHECK_N] = {
 };				//	for checkbox: 0(unchecked) or 1(checked); for button: must be -1
 static_assert((sizeof(check_name_en) / sizeof(*check_name_en)) == (sizeof(check_default) / sizeof(*check_default)), "error");
 
-SigmoidTable* ST = nullptr;
+SigmoidTable ST;
 RSigmoidTable* RST = nullptr;
 
 
@@ -222,11 +222,7 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 	if (fp->check[4] || fp->check[5]) start_con = ch::steady_clock::now();
 #endif
 
-	if (!ST)
-	{
-		int scale = YSCALE;
-		ST = new SigmoidTable(static_cast<float>(fp->track[0]/100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
-	}
+	ST.change_param(static_cast<float>(fp->track[0]/100.0f), static_cast<float>(fp->track[1]));
 
 	if (!(fp->check[1] || fp->check[2] || fp->check[3]))
 	{
@@ -237,7 +233,7 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 				for (int c = 0; c < fpip->w; c++)
 				{
 					PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
-					const short new_y = static_cast<short>(ST->lookup(px->y));
+					const short new_y = static_cast<short>(ST.lookup(px->y));
 					px->y = new_y;
 				}
 			}
@@ -256,15 +252,15 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 					// transform each channel is needed
 					if (fp->check[3])
 					{
-						buf[1] = static_cast<float>(ST->lookup(static_cast<int>(buf[1])));
+						buf[1] = static_cast<float>(ST.lookup(buf[1]));
 					}
 					if (fp->check[2])
 					{
-						buf[2] = static_cast<float>(ST->lookup(static_cast<int>(buf[2])));
+						buf[2] = static_cast<float>(ST.lookup(buf[2]));
 					}
 					if (fp->check[1])
 					{
-						buf[3] = static_cast<float>(ST->lookup(static_cast<int>(buf[3])));
+						buf[3] = static_cast<float>(ST.lookup(buf[3]));
 					}
 					// convert back
 					color_cvt::rgb2yc(px, buf);
@@ -300,11 +296,6 @@ BOOL func_exit_con(FILTER *fp)
 {
 	//DO NOT PUT MessageBox here, crash the application!
 	//MessageBox(NULL, "func_exit invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
-	if (ST)
-	{
-		delete ST;
-		ST = nullptr;
-	}
 #ifdef USECLOCK
 	if (!logbuf_sc.empty()) {
 		std::ofstream logfile_sc("log_sc.csv");
@@ -321,18 +312,8 @@ BOOL func_update_con(FILTER *fp, int status)
 	switch (status)
 	{
 	case FILTER_UPDATE_STATUS_TRACK:
-	{
-		if (ST) delete ST;
-		int scale = YSCALE;
-		ST= new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
-	}
-		break;
 	case FILTER_UPDATE_STATUS_TRACK + 1:
-	{
-		if (ST) delete ST;
-		int scale = YSCALE;
-		ST = new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
-	}
+		ST.change_param(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]));
 		break;
 	case FILTER_UPDATE_STATUS_CHECK:
 	{
@@ -409,14 +390,7 @@ BOOL func_WndProc_con(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, voi
 	case WM_FILTER_MAIN_MOUSE_MOVE:
 		break;
 	case WM_FILTER_FILE_CLOSE:
-	{
-		if (ST)
-		{
-			delete ST;
-			ST = nullptr;
-		}
 		break;
-	}
 #ifdef USECLOCK
 	case WM_FILTER_EXPORT:
 	case WM_FILTER_SAVE_START:
