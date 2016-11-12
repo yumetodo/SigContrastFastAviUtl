@@ -35,7 +35,7 @@ inline void SigmoidTable::change_param(float midtone, float strength) noexcept
 	//0.0 <= midtone <= 1.0, 1.0 <= strength <= 30.0
 	if (midtone == this->midtone_ && strength == this->strength_) return;
 	table_.front() = 0;
-	parallel::par_for<value_type>(0, static_cast<value_type>(bin + 1), [this](value_type begin, value_type end, float midtone, float strength) {
+	parallel::par_for<value_type>(1, bin, [this](value_type begin, value_type end, float midtone, float strength) {
 		for (value_type x = begin; x < end; x++)
 		{
 			table_[x] = static_cast<value_type>(multiplier * sigmoid(midtone, strength, static_cast<float>(x) / multiplier));
