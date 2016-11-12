@@ -1,8 +1,8 @@
 ﻿#define NOMINMAX
 #include <Windows.h>
 #include "filter.h" //please set this to AviUtl SDK's filter.h
-#include "SigmoidTable.h"
-#include "RSigmoidTable.h"
+#include "SigmoidTable.hpp"
+#include "RSigmoidTable.hpp"
 #include "thread.hpp"
 #define USECLOCK
 #ifdef USECLOCK

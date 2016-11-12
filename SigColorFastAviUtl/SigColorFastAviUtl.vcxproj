@@ -101,9 +101,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="filter.h" />
-    <ClInclude Include="RSigmoidTable.h" />
+    <ClInclude Include="RSigmoidTable.hpp" />
     <ClInclude Include="sigmoid.hpp" />
-    <ClInclude Include="SigmoidTable.h" />
+    <ClInclude Include="SigmoidTable.hpp" />
     <ClInclude Include="thread.hpp" />
   </ItemGroup>
   <ItemGroup>

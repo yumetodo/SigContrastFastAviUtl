@@ -2,8 +2,8 @@
 #include "../3rd_party/iutest/include/iutest.hpp"
 #include "SigmoidTable.h"
 #include "RSigmoidTable.h"
-#include "../SigColorFastAviUtl/SigmoidTable.h"
-#include "../SigColorFastAviUtl/RSigmoidTable.h"
+#include "../SigColorFastAviUtl/SigmoidTable.hpp"
+#include "../SigColorFastAviUtl/RSigmoidTable.hpp"
 IUTEST_TEST(SigmoidTableCompatibility, SigmoidTable_test) {
 	//0.0 <= midtone <= 1.0, 1.0 <= strength <= 30.0
 	SigmoidTable new_table;
