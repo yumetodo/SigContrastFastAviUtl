@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <cstdint>
 #include <array>
+
 #include "sigmoid.hpp"
 #include "thread.hpp"
 class SigmoidTable
@@ -10,10 +11,13 @@ public:
 	static constexpr value_type table_size = 4097;
 	static constexpr value_type bin = table_size - 1;
 	static constexpr float multiplier = bin;
+	static constexpr value_type on_error_value_high = bin;
+	static constexpr value_type on_error_value_low = 0;
 private:
 	std::array<value_type, table_size> table_;
 	float midtone_;
 	float strength_;
+
 public:
 	SigmoidTable() = default;
 	SigmoidTable(const SigmoidTable&) = delete;
@@ -23,12 +27,12 @@ public:
 	void change_param(float midtone, float strength) noexcept;
 
 	template<typename Unsigned, std::enable_if_t<std::is_unsigned<Unsigned>::value && (sizeof(value_type) <= sizeof(Unsigned)), std::nullptr_t> = nullptr>
-	value_type lookup(Unsigned key) const noexcept { return (table_size <= key) ? table_.back() : table_[key]; }
+	value_type lookup(Unsigned key) const noexcept { return (table_size <= key) ? on_error_value_high : table_[key]; }
 
 	template<typename T, std::enable_if_t<
 		(std::is_signed<T>::value && (sizeof(value_type) <= sizeof(T))) || std::is_floating_point<T>::value, 
 	std::nullptr_t> = nullptr>
-	value_type lookup(T key) const noexcept { return (key < 0 || static_cast<T>(table_size) <= key) ? table_.back() : table_[static_cast<value_type>(key)]; }
+	value_type lookup(T key) const noexcept { return (key < 0) ? on_error_value_low : lookup(static_cast<value_type>(key)); }
 };
 inline void SigmoidTable::change_param(float midtone, float strength) noexcept
 {
