@@ -30,6 +30,9 @@
     <ClInclude Include="SigmoidTable.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="color_cvt.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sigcolorfastaviutl.cpp">

@@ -100,6 +100,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="color_cvt.hpp" />
     <ClInclude Include="filter.h" />
     <ClInclude Include="RSigmoidTable.hpp" />
     <ClInclude Include="sigmoid.hpp" />
