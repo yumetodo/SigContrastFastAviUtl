@@ -277,8 +277,8 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 			using namespace std::chrono_literals;//UDLs : ms
 			static auto last_echo_time = end_con;
 			if (last_echo_time == end_con || last_echo_time + 150ms < end_con) {
-				const auto elapsed_s = std::to_string(ch::duration_cast<ch::milliseconds>(elapsed).count());
-				SetWindowText(fp->hwnd, ("SCon:" + elapsed_s + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
+				const auto elapsed_s = std::to_string(ch::duration_cast<ch::microseconds>(elapsed).count());
+				SetWindowText(fp->hwnd, ("SCon:" + elapsed_s + "micro sec. @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
 				fp->exfunc->filter_window_update(fp);
 				last_echo_time = end_con;
 			}
@@ -467,8 +467,8 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 			using namespace std::chrono_literals;//UDLs : ms
 			static auto last_echo_time = end_sd;
 			if (last_echo_time == end_sd || last_echo_time + 150ms < end_sd) {
-				const auto elapsed_s = std::to_string(ch::duration_cast<ch::milliseconds>(elapsed).count());
-				SetWindowText(fp->hwnd, ("SDeCon:" + elapsed_s + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
+				const auto elapsed_s = std::to_string(ch::duration_cast<ch::microseconds>(elapsed).count());
+				SetWindowText(fp->hwnd, ("SDeCon:" + elapsed_s + "micro sec. @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
 				fp->exfunc->filter_window_update(fp);
 				last_echo_time = end_sd;
 			}
