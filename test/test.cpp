@@ -12,8 +12,8 @@ IUTEST_TEST(SigmoidTableCompatibility, SigmoidTable_test) {
 			old::SigmoidTable old_table(m / 100.0f, static_cast<float>(s), 4096, 4096.0);
 			new_table.change_param(m / 100.0f, static_cast<float>(s));
 			for (int i = 0; i <= 4096; ++i) {
-				IUTEST_EXPECT_NEAR(static_cast<float>(old_table.lookup(i)), static_cast<float>(new_table.lookup(i)), 1.0f);
-				IUTEST_ASSERT_NEAR(static_cast<float>(old_table.lookup(i)), static_cast<float>(new_table.lookup(i)), 2.0f);
+				IUTEST_ASSERT_NEAR(static_cast<float>(old_table.lookup(i)), static_cast<float>(new_table.lookup(i)), 1.0f)
+					<< " (when i=" << i << " m=" << m << " s=" << s << ')';
 			}
 		}
 	}
