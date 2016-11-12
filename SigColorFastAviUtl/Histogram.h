@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "LUT.h"
 #include <limits>
 template<typename T> class Histogram :

@@ -82,7 +82,6 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <AdditionalOptions>/Qpar-report:1 %(AdditionalOptions)</AdditionalOptions>
       <Parallelization>false</Parallelization>
       <GenerateAlternateCodePaths>None</GenerateAlternateCodePaths>
@@ -102,17 +101,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="filter.h" />
-    <ClInclude Include="Histogram.h" />
-    <ClInclude Include="LUT.h" />
     <ClInclude Include="RSigmoidTable.h" />
+    <ClInclude Include="sigmoid.hpp" />
     <ClInclude Include="SigmoidTable.h" />
+    <ClInclude Include="thread.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Histogram.cpp" />
-    <ClCompile Include="LUT.cpp" />
-    <ClCompile Include="RSigmoidTable.cpp" />
     <ClCompile Include="sigcolorfastaviutl.cpp" />
-    <ClCompile Include="SigmoidTable.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

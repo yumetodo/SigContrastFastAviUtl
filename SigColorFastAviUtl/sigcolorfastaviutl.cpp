@@ -3,6 +3,7 @@
 #include "filter.h" //please set this to AviUtl SDK's filter.h
 #include "SigmoidTable.h"
 #include "RSigmoidTable.h"
+#include "thread.hpp"
 #define USECLOCK
 #ifdef USECLOCK
 #include <chrono>
@@ -83,8 +84,8 @@ int		check_default[CHECK_N] = {
 };				//	for checkbox: 0(unchecked) or 1(checked); for button: must be -1
 static_assert((sizeof(check_name_en) / sizeof(*check_name_en)) == (sizeof(check_default) / sizeof(*check_default)), "error");
 
-SigmoidTable* ST = nullptr;
-RSigmoidTable* RST = nullptr;
+SigmoidTable ST;
+RSigmoidTable RST;
 
 
 													// Define filter info
@@ -171,8 +172,46 @@ BOOL func_init_sd(FILTER *fp)
 {
 	return TRUE;
 }
+namespace color_cvt {
+	inline void yc2rgb(float(&buf)[4], const PIXEL_YC* px) noexcept {
+		// Load YUV2RGB matrix
+		static const __m128 cy = _mm_set_ps(COEFY, 0.f);
+		static const __m128 cu = _mm_set_ps(COEFU, 0.f);
+		static const __m128 cv = _mm_set_ps(COEFV, 0.f);
+		__m128 my = _mm_set1_ps(static_cast<float>(px->y));
+		__m128 mu = _mm_set1_ps(static_cast<float>(px->cb));
+		__m128 mv = _mm_set1_ps(static_cast<float>(px->cr));
 
+		my = _mm_mul_ps(my, cy);
+		mu = _mm_mul_ps(mu, cu);
+		mv = _mm_mul_ps(mv, cv);
 
+		my = _mm_add_ps(my, mu);
+		my = _mm_add_ps(my, mv); //result in my
+
+		_mm_storeu_ps(buf, my); // buf: 0, b, g, r
+	}
+	inline void rgb2yc(PIXEL_YC* px, const float(&buf)[4]) noexcept {
+		// Load RGB2YUV matrix
+		static const __m128 cr = _mm_set_ps(COEFR, 0.f);
+		static const __m128 cg = _mm_set_ps(COEFG, 0.f);
+		static const __m128 cb = _mm_set_ps(COEFB, 0.f);
+		__m128 my = _mm_set1_ps(buf[1]);
+		__m128 mu = _mm_set1_ps(buf[2]);
+		__m128 mv = _mm_set1_ps(buf[3]);
+		my = _mm_mul_ps(my, cb);
+		mu = _mm_mul_ps(mu, cg);
+		mv = _mm_mul_ps(mv, cr);
+		my = _mm_add_ps(my, mu);
+		my = _mm_add_ps(my, mv); //result in my
+
+		float tmp[4];
+		_mm_storeu_ps(tmp, my); // tmp: 0, v, u, y
+		px->y = static_cast<short>(tmp[3]);
+		px->cb = static_cast<short>(tmp[2]);
+		px->cr = static_cast<short>(tmp[1]);
+	}
+}
 BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image manipulation function
 {
 
@@ -183,98 +222,51 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 	if (fp->check[4] || fp->check[5]) start_con = ch::steady_clock::now();
 #endif
 
-	if (!ST)
-	{
-		int scale = YSCALE;
-		ST = new SigmoidTable(static_cast<float>(fp->track[0]/100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
-	}
+	ST.change_param(static_cast<float>(fp->track[0]/100.0f), static_cast<float>(fp->track[1]));
 
 	if (!(fp->check[1] || fp->check[2] || fp->check[3]))
 	{
 		/* Scan Y channel data */
-		const int fh = fpip->h;
-
-#pragma loop( hint_parallel(0) )
-#pragma loop( ivdep )
-		for (int r = 0; r < fh; r++)
-		{
-			for (int c = 0; c < fpip->w; c++)
+		parallel::par_for(fpip->h, [fpip](int begin, int end) {
+			for (int r = begin; r < end; r++)
 			{
-				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
-				short new_y = static_cast<short>(ST->lookup(px->y));
-				px->y = new_y;
+				for (int c = 0; c < fpip->w; c++)
+				{
+					PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
+					const short new_y = static_cast<short>(ST.lookup(px->y));
+					px->y = new_y;
+				}
 			}
-		}
+		});
 	}
 	else //RGB mode
 	{
-		const int fh = fpip->h;
-		const int fw = fpip->w;
-		// Load YUV2RGB matrix
-		__m128 cy = _mm_set_ps(COEFY, 0.f);
-		__m128 cu = _mm_set_ps(COEFU, 0.f);
-		__m128 cv = _mm_set_ps(COEFV, 0.f);
-		// Load RGB2YUV matrix
-		__m128 cr = _mm_set_ps(COEFR, 0.f);
-		__m128 cg = _mm_set_ps(COEFG, 0.f);
-		__m128 cb = _mm_set_ps(COEFB, 0.f);
-#pragma loop( hint_parallel(0) )
-#pragma loop( ivdep )
-		for (int r = 0; r < fh; r++)
-		{
+		parallel::par_for(fpip->h, [fpip, fp](int begin, int end) {
 			float buf[4] = { 0 };
-#pragma loop( no_vector )
-			for (int c = 0; c < fw; c++)
+			for (int r = begin; r < end; r++)
 			{
-				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
-				//implement our conversion
-				__m128 my = _mm_set1_ps(static_cast<float>(px->y));
-				__m128 mu = _mm_set1_ps(static_cast<float>(px->cb));
-				__m128 mv = _mm_set1_ps(static_cast<float>(px->cr));
-
-				my = _mm_mul_ps(my, cy);
-				mu = _mm_mul_ps(mu, cu);
-				mv = _mm_mul_ps(mv, cv);
-
-				my = _mm_add_ps(my, mu);
-				my = _mm_add_ps(my, mv); //result in my
-				
-				_mm_storeu_ps(buf, my); // buf: 0, b, g, r
-				// End of YUV2RGB intrinsics
-
-				// transform each channel is needed
-				if (fp->check[3])
+				for (int c = 0; c < fpip->w; c++)
 				{
-					buf[1] = static_cast<float>(ST->lookup(static_cast<int>(buf[1])));
+					PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
+					color_cvt::yc2rgb(buf, px);
+					// transform each channel is needed
+					if (fp->check[3])
+					{
+						buf[1] = static_cast<float>(ST.lookup(buf[1]));
+					}
+					if (fp->check[2])
+					{
+						buf[2] = static_cast<float>(ST.lookup(buf[2]));
+					}
+					if (fp->check[1])
+					{
+						buf[3] = static_cast<float>(ST.lookup(buf[3]));
+					}
+					// convert back
+					color_cvt::rgb2yc(px, buf);
 				}
-				if (fp->check[2])
-				{
-					buf[2] = static_cast<float>(ST->lookup(static_cast<int>(buf[2])));
-				}
-				if (fp->check[1])
-				{
-					buf[3] = static_cast<float>(ST->lookup(static_cast<int>(buf[3])));
-				}
-				
-				
-				// convert back
-				
-				my = _mm_set1_ps(buf[1]);
-				mu = _mm_set1_ps(buf[2]);
-				mv = _mm_set1_ps(buf[3]);
-				my = _mm_mul_ps(my, cb);
-				mu = _mm_mul_ps(mu, cg);
-				mv = _mm_mul_ps(mv, cr);
-				my = _mm_add_ps(my, mu);
-				my = _mm_add_ps(my, mv); //result in my
-				
-				_mm_storeu_ps(buf, my); // buf: 0, v, u, y
-				px->y = static_cast<short>(buf[3]);
-				px->cb = static_cast<short>(buf[2]);
-				px->cr = static_cast<short>(buf[1]);
 			}
-			
-		}
+		});
 	}
 #ifdef USECLOCK
 	if (fp->check[4] || fp->check[5])
@@ -285,8 +277,8 @@ BOOL func_proc_con(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image
 			using namespace std::chrono_literals;//UDLs : ms
 			static auto last_echo_time = end_con;
 			if (last_echo_time == end_con || last_echo_time + 150ms < end_con) {
-				const auto elapsed_s = std::to_string(ch::duration_cast<ch::milliseconds>(elapsed).count());
-				SetWindowText(fp->hwnd, ("SCon:" + elapsed_s + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
+				const auto elapsed_s = std::to_string(ch::duration_cast<ch::microseconds>(elapsed).count());
+				SetWindowText(fp->hwnd, ("SCon:" + elapsed_s + "micro sec. @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
 				fp->exfunc->filter_window_update(fp);
 				last_echo_time = end_con;
 			}
@@ -304,11 +296,6 @@ BOOL func_exit_con(FILTER *fp)
 {
 	//DO NOT PUT MessageBox here, crash the application!
 	//MessageBox(NULL, "func_exit invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
-	if (ST)
-	{
-		delete ST;
-		ST = nullptr;
-	}
 #ifdef USECLOCK
 	if (!logbuf_sc.empty()) {
 		std::ofstream logfile_sc("log_sc.csv");
@@ -325,18 +312,8 @@ BOOL func_update_con(FILTER *fp, int status)
 	switch (status)
 	{
 	case FILTER_UPDATE_STATUS_TRACK:
-	{
-		if (ST) delete ST;
-		int scale = YSCALE;
-		ST= new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
-	}
-		break;
 	case FILTER_UPDATE_STATUS_TRACK + 1:
-	{
-		if (ST) delete ST;
-		int scale = YSCALE;
-		ST = new SigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
-	}
+		ST.change_param(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]));
 		break;
 	case FILTER_UPDATE_STATUS_CHECK:
 	{
@@ -413,14 +390,7 @@ BOOL func_WndProc_con(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, voi
 	case WM_FILTER_MAIN_MOUSE_MOVE:
 		break;
 	case WM_FILTER_FILE_CLOSE:
-	{
-		if (ST)
-		{
-			delete ST;
-			ST = nullptr;
-		}
 		break;
-	}
 #ifdef USECLOCK
 	case WM_FILTER_EXPORT:
 	case WM_FILTER_SAVE_START:
@@ -440,99 +410,53 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 #endif
 
 	/* Create a Reverse sigmoid table if none exists */
-	if (!RST)
-	{
-		int scale = YSCALE;
-		RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
-	}
+	RST.change_param(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]));
 
 	if (!(fp->check[1] || fp->check[2] || fp->check[3]))
 	{
 		/* Scan Y channel data */
-		const int fh = fpip->h;
-
-#pragma loop( hint_parallel(0) )
-#pragma loop( ivdep )
-		for (int r = 0; r < fh; r++)
-		{
-			for (int c = 0; c < fpip->w; c++)
+		parallel::par_for(fpip->h, [fpip](int begin, int end) {
+			for (int r = begin; r < end; r++)
 			{
-				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
-				short new_y = static_cast<short>(RST->lookup(px->y));
-				px->y = new_y;
+				for (int c = 0; c < fpip->w; c++)
+				{
+					PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
+					const short new_y = static_cast<short>(RST.lookup(px->y));
+					px->y = new_y;
+				}
 			}
-		}
+		});
 	}
 	else //RGB mode
 	{
-		const int fh = fpip->h;
-		const int fw = fpip->w;
-		// Load YUV2RGB matrix
-		__m128 cy = _mm_set_ps(COEFY, 0.f);
-		__m128 cu = _mm_set_ps(COEFU, 0.f);
-		__m128 cv = _mm_set_ps(COEFV, 0.f);
-		// Load RGB2YUV matrix
-		__m128 cr = _mm_set_ps(COEFR, 0.f);
-		__m128 cg = _mm_set_ps(COEFG, 0.f);
-		__m128 cb = _mm_set_ps(COEFB, 0.f);
-#pragma loop( hint_parallel(0) )
-#pragma loop( ivdep )
-		for (int r = 0; r < fh; r++)
-		{
+		parallel::par_for(fpip->h, [fpip, fp](int begin, int end) {
 			float buf[4] = { 0 };
-#pragma loop( no_vector )
-			for (int c = 0; c < fw; c++)
+			for (int r = begin; r < end; r++)
 			{
-				PIXEL_YC* px = fpip->ycp_edit + r* fpip->max_w + c;
-				//implement our conversion
-				__m128 my = _mm_set1_ps(static_cast<float>(px->y));
-				__m128 mu = _mm_set1_ps(static_cast<float>(px->cb));
-				__m128 mv = _mm_set1_ps(static_cast<float>(px->cr));
-
-				my = _mm_mul_ps(my, cy);
-				mu = _mm_mul_ps(mu, cu);
-				mv = _mm_mul_ps(mv, cv);
-
-				my = _mm_add_ps(my, mu);
-				my = _mm_add_ps(my, mv); //result in my
-
-				_mm_storeu_ps(buf, my); // buf: 0, b, g, r
-										// End of YUV2RGB intrinsics
-				// transform each channel as needed
-				// Any way to parallelize the following 3 lookup???
-				
-				if (fp->check[1])
+				for (int c = 0; c < fpip->w; c++)
 				{
-					buf[3] = static_cast<float>(RST->lookup(static_cast<int>(buf[3])));
-					
+					PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
+					color_cvt::yc2rgb(buf, px);
+					// transform each channel is needed
+					//PIXEL t_rgb{ 0 };
+					if (fp->check[1])
+					{
+						buf[3] = static_cast<float>(RST.lookup(buf[3]));
+					}
+					if (fp->check[2])
+					{
+						buf[2] = static_cast<float>(RST.lookup(buf[2]));
+					}
+					if (fp->check[3])
+					{
+						buf[1] = static_cast<float>(RST.lookup(buf[1]));
+					}
+					// convert back
+					color_cvt::rgb2yc(px, buf);
 				}
-				if (fp->check[2])
-				{
-					buf[2] = static_cast<float>(RST->lookup(static_cast<int>(buf[2])));
-					
-				}
-				if (fp->check[3])
-				{
-					buf[1] = static_cast<float>(RST->lookup(static_cast<int>(buf[1])));
-					
-				}
-				// convert back
-				my = _mm_set1_ps(buf[1]);
-				mu = _mm_set1_ps(buf[2]);
-				mv = _mm_set1_ps(buf[3]);
-				my = _mm_mul_ps(my, cb);
-				mu = _mm_mul_ps(mu, cg);
-				mv = _mm_mul_ps(mv, cr);
-				my = _mm_add_ps(my, mu);
-				my = _mm_add_ps(my, mv); //result in my
-
-				_mm_storeu_ps(buf, my); // buf: 0, v, u, y
-				px->y = static_cast<short>(buf[3]);
-				px->cb = static_cast<short>(buf[2]);
-				px->cr = static_cast<short>(buf[1]);
 			}
-						
-		}
+
+		});
 	}
 #ifdef USECLOCK
 	if (fp->check[4] || fp->check[5])
@@ -543,8 +467,8 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 			using namespace std::chrono_literals;//UDLs : ms
 			static auto last_echo_time = end_sd;
 			if (last_echo_time == end_sd || last_echo_time + 150ms < end_sd) {
-				const auto elapsed_s = std::to_string(ch::duration_cast<ch::milliseconds>(elapsed).count());
-				SetWindowText(fp->hwnd, ("SDeCon:" + elapsed_s + "ms @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
+				const auto elapsed_s = std::to_string(ch::duration_cast<ch::microseconds>(elapsed).count());
+				SetWindowText(fp->hwnd, ("SDeCon:" + elapsed_s + "micro sec. @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
 				fp->exfunc->filter_window_update(fp);
 				last_echo_time = end_sd;
 			}
@@ -561,11 +485,6 @@ BOOL func_proc_sd(FILTER *fp, FILTER_PROC_INFO *fpip) // This is the main image 
 BOOL func_exit_sd(FILTER *fp)
 {
 	//DO NOT PUT MessageBox here, crash the application!
-	if (RST)
-	{
-		delete RST;
-		RST = nullptr;
-	}
 #ifdef USECLOCK
 	if (!logbuf_sd.empty()) {
 		std::ofstream logfile_sd("log_sd.csv");
@@ -581,19 +500,9 @@ BOOL func_update_sd(FILTER *fp, int status)
 	switch (status)
 	{
 	case FILTER_UPDATE_STATUS_TRACK:
-	{
-		if (RST) delete RST;
-		int scale = YSCALE;
-		RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
-	}
-	break;
 	case FILTER_UPDATE_STATUS_TRACK + 1:
-	{
-		if (RST) delete RST;
-		int scale = YSCALE;
-		RST = new RSigmoidTable(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]), scale, static_cast<float>(scale));
-	}
-	break;
+		RST.change_param(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]));
+		break;
 	case FILTER_UPDATE_STATUS_CHECK:
 	{
 		if (fp->check[0] == 1)
