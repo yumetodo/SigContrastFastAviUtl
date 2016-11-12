@@ -11,12 +11,12 @@ public:
 	static constexpr value_type table_size = 4097;
 	static constexpr value_type bin = table_size - 1;
 	static constexpr float multiplier = bin;
-	static constexpr value_type on_error_value_high = bin;
-	static constexpr value_type on_error_value_low = 0;
 private:
 	std::array<value_type, table_size> table_;
 	float midtone_;
 	float strength_;
+	value_type on_error_value_high_;
+	static constexpr value_type on_error_value_low_ = 0;
 	void insert_to_table(std::size_t pos, value_type value) noexcept;
 public:
 	RSigmoidTable() = default;
@@ -27,12 +27,12 @@ public:
 	void change_param(float midtone, float strength) noexcept;
 
 	template<typename Unsigned, std::enable_if_t<std::is_unsigned<Unsigned>::value && (sizeof(value_type) <= sizeof(Unsigned)), std::nullptr_t> = nullptr>
-	value_type lookup(Unsigned key) const noexcept { return (table_size <= key) ? on_error_value_high : table_[key]; }
+	value_type lookup(Unsigned key) const noexcept { return (table_size <= key) ? on_error_value_high_ : table_[key]; }
 
 	template<typename T, std::enable_if_t<
 		(std::is_signed<T>::value && (sizeof(value_type) <= sizeof(T))) || std::is_floating_point<T>::value, 
 	std::nullptr_t> = nullptr>
-	value_type lookup(T key) const noexcept { return (key < 0) ? on_error_value_low : lookup(static_cast<value_type>(key)); }
+	value_type lookup(T key) const noexcept { return (key < 0) ? on_error_value_low_ : lookup(static_cast<value_type>(key)); }
 };
 inline void RSigmoidTable::insert_to_table(std::size_t pos, value_type value) noexcept
 {
@@ -45,11 +45,14 @@ inline void RSigmoidTable::change_param(float midtone, float strength) noexcept
 	if (midtone == this->midtone_ && strength == this->strength_) return;
 	//clear array for checking multiple insertation at function `RSigmoidTable::insert_to_table`
 	std::fill(table_.begin(), table_.end(), 0);
-	for (value_type pre = 0, y = 1; y <= bin; ++y)
+
+	value_type pre = 0;
+	for (value_type y = 1; y <= bin; ++y)
 	{
 		const auto x = static_cast<value_type>(multiplier * sigmoid(midtone, strength, static_cast<float>(y) / multiplier));
 		for (value_type i = pre + 1; i <= x; ++i) this->insert_to_table(i, y);//fill blanc and insert new value
 		pre = x;
 	}
+	on_error_value_high_ = table_[pre];
 }
 
