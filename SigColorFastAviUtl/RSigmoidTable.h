@@ -32,7 +32,9 @@ public:
 	template<typename T, std::enable_if_t<
 		(std::is_signed<T>::value && (sizeof(value_type) <= sizeof(T))) || std::is_floating_point<T>::value, 
 	std::nullptr_t> = nullptr>
-	value_type lookup(T key) const noexcept { return (key < 0) ? on_error_value_low_ : lookup(static_cast<value_type>(key)); }
+	value_type lookup(T key) const noexcept { 
+		return (key < 0) ? on_error_value_low_ : (table_size <= static_cast<std::uintmax_t>(key)) ? on_error_value_high_ : table_[static_cast<value_type>(key)];
+	}
 };
 inline void RSigmoidTable::insert_to_table(std::size_t pos, value_type value) noexcept
 {
@@ -53,6 +55,7 @@ inline void RSigmoidTable::change_param(float midtone, float strength) noexcept
 		for (value_type i = pre + 1; i <= x; ++i) this->insert_to_table(i, y);//fill blanc and insert new value
 		pre = x;
 	}
+	//https://github.com/MaverickTse/SigContrastFastAviUtl/pull/9#discussion_r87692343
 	on_error_value_high_ = table_[pre];
 }
 
