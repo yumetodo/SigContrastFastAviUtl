@@ -5,6 +5,7 @@
 #include "RSigmoidTable.hpp"
 #include "thread.hpp"
 #include "color_cvt.hpp"
+#include "filter_helper.hpp"
 #ifdef USECLOCK
 #include <chrono>
 #include <ctime>
@@ -95,11 +96,11 @@ namespace sigmoid_contrast {
 	BOOL update(FILTER* fp, int status)
 	{
 		switch (status){
-			case FILTER_UPDATE_STATUS_TRACK:
-			case FILTER_UPDATE_STATUS_TRACK + 1:
+			case FILTER_UPDATE_MIDTONE_TRACK:
+			case FILTER_UPDATE_STRENGTH_TRACK:
 				ST.change_param(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]));
 				break;
-			case FILTER_UPDATE_STATUS_CHECK:
+			case FILTER_UPDATE_Y_CHECK:
 				if (fp->check[0] == 1){
 					fp->check[1] = 0;
 					fp->check[2] = 0;
@@ -111,9 +112,9 @@ namespace sigmoid_contrast {
 					fp->check[3] = 1;
 				}
 				break;
-			case FILTER_UPDATE_STATUS_CHECK + 1:
-			case FILTER_UPDATE_STATUS_CHECK + 2:
-			case FILTER_UPDATE_STATUS_CHECK + 3:
+			case FILTER_UPDATE_R_CHECK:
+			case FILTER_UPDATE_G_CHECK:
+			case FILTER_UPDATE_B_CHECK:
 				if (fp->check[1] == 1){
 					fp->check[0] = 0;
 				}
@@ -122,7 +123,7 @@ namespace sigmoid_contrast {
 				}
 				break;
 #ifdef USECLOCK
-			case FILTER_UPDATE_STATUS_CHECK + 4:
+			case FILTER_UPDATE_ECHO_BENCHMARK_CHECK:
 				if (0 == fp->check[4]) SetWindowText(fp->hwnd, PLUGIN_NAME_SCON);
 				break;
 #endif
@@ -288,11 +289,11 @@ namespace sigmoid_decontrast {
 	BOOL update(FILTER* fp, int status)
 	{
 		switch (status){
-			case FILTER_UPDATE_STATUS_TRACK:
-			case FILTER_UPDATE_STATUS_TRACK + 1:
+			case FILTER_UPDATE_MIDTONE_TRACK:
+			case FILTER_UPDATE_STRENGTH_TRACK:
 				RST.change_param(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]));
 				break;
-			case FILTER_UPDATE_STATUS_CHECK:{
+			case FILTER_UPDATE_Y_CHECK:
 				if (fp->check[0] == 1){
 					fp->check[1] = 0;
 					fp->check[2] = 0;
@@ -303,11 +304,10 @@ namespace sigmoid_decontrast {
 					fp->check[2] = 1;
 					fp->check[3] = 1;
 				}
-			}
-			break;
-			case FILTER_UPDATE_STATUS_CHECK + 1:
-			case FILTER_UPDATE_STATUS_CHECK + 2:
-			case FILTER_UPDATE_STATUS_CHECK + 3:
+				break;
+			case FILTER_UPDATE_R_CHECK:
+			case FILTER_UPDATE_G_CHECK:
+			case FILTER_UPDATE_B_CHECK:
 				if (fp->check[1] == 1){
 					fp->check[0] = 0;
 				}
@@ -316,7 +316,7 @@ namespace sigmoid_decontrast {
 				}
 				break;
 #ifdef USECLOCK
-			case FILTER_UPDATE_STATUS_CHECK + 4:
+			case FILTER_UPDATE_ECHO_BENCHMARK_CHECK:
 				if (0 == fp->check[4]) SetWindowText(fp->hwnd, PLUGIN_NAME_SDCON);
 				break;
 #endif
