@@ -13,6 +13,6 @@ A lot of useless code that doesn't being compiled are left behind; Commented out
 
 # Technical details
 * Dumpped IM library -> reduce memory footprint and overhead
-* Make use of compiler's auto parallelization/vectorization for multithreading
+* using ``std::thread`` for  parallelization/vectorization
 * Use table lookup to reduce calculation
 * Two plugins in a single AUF
