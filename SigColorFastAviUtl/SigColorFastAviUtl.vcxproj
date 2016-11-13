@@ -107,6 +107,7 @@
     <ClInclude Include="sigmoid.hpp" />
     <ClInclude Include="SigmoidTable.hpp" />
     <ClInclude Include="thread.hpp" />
+    <ClInclude Include="time_logger.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sigcolorfastaviutl.cpp" />

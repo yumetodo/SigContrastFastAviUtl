@@ -7,12 +7,10 @@
 #include "color_cvt.hpp"
 #include "filter_helper.hpp"
 #ifdef USECLOCK
+#include "time_logger.hpp"
 #include <chrono>
 #include <ctime>
 #include <ratio>
-#include <string>
-#include <fstream>
-#include <deque>
 namespace ch = std::chrono;
 #endif
 
@@ -65,7 +63,7 @@ static_assert((sizeof(check_name_en) / sizeof(*check_name_en)) == (sizeof(check_
 namespace sigmoid_contrast {
 	static SigmoidTable ST;
 #ifdef USECLOCK
-	std::deque<ch::nanoseconds::rep> logbuf;
+	time_logger logger("SCon", "log_sc.csv");
 #endif
 	BOOL init(FILTER* /*fp*/) noexcept { return TRUE; }
 	BOOL exit(FILTER* /*fp*/)
@@ -73,12 +71,7 @@ namespace sigmoid_contrast {
 		//DO NOT PUT MessageBox here, crash the application!
 		//MessageBox(NULL, "func_exit invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
 #ifdef USECLOCK
-		if (!logbuf.empty()) {
-			std::ofstream logfile_sc("log_sc.csv");
-			for (auto&& i : logbuf) {
-				logfile_sc << "SCon," << i << std::endl;
-			}
-		}
+		logger.write_out();
 #endif
 		return TRUE;
 	}
@@ -176,7 +169,7 @@ namespace sigmoid_contrast {
 				}
 			}
 			if (fc[check::save_benchmark]) {
-				logbuf.push_back(ch::duration_cast<ch::nanoseconds>(elapsed).count());
+				logger.push(elapsed);
 			}
 		}
 #endif
@@ -209,12 +202,7 @@ namespace sigmoid_contrast {
 	BOOL save_end(FILTER* /*fp*/, void* /*editp*/)
 	{
 #ifdef USECLOCK
-		if (!logbuf.empty()) {
-			std::ofstream logfile_sc("log_sc.csv");
-			for (auto&& i : logbuf) {
-				logfile_sc << "SCon," << i << std::endl;
-			}
-		}
+		logger.write_out();
 #endif
 		return TRUE;
 	}
@@ -247,7 +235,7 @@ namespace sigmoid_contrast {
 namespace sigmoid_decontrast {
 	static RSigmoidTable RST;
 #ifdef USECLOCK
-	std::deque<ch::nanoseconds::rep> logbuf;
+	time_logger logger("SDeCon", "log_sd.csv");
 #endif
 
 	BOOL init(FILTER* /*fp*/) noexcept { return TRUE; }
@@ -255,12 +243,7 @@ namespace sigmoid_decontrast {
 	{
 		//DO NOT PUT MessageBox here, crash the application!
 #ifdef USECLOCK
-		if (!logbuf.empty()) {
-			std::ofstream logfile_sd("log_sd.csv");
-			for (auto&& i : logbuf) {
-				logfile_sd << "SDeCon," << i << std::endl;
-			}
-		}
+		logger.write_out();
 #endif
 		return TRUE;
 	}
@@ -364,7 +347,7 @@ namespace sigmoid_decontrast {
 				}
 			}
 			if (fc[check::save_benchmark]) {
-				logbuf.push_back(ch::duration_cast<ch::nanoseconds>(elapsed).count());
+				logger.push(elapsed);
 			}
 		}
 #endif
@@ -401,12 +384,7 @@ namespace sigmoid_decontrast {
 	BOOL save_end(FILTER* /*fp*/, void* /*editp*/)
 	{
 #ifdef USECLOCK
-		if (!logbuf.empty()) {
-			std::ofstream logfile_sd("log_sd.csv");
-			for (auto&& i : logbuf) {
-				logfile_sd << "SDeCon," << i << std::endl;
-			}
-		}
+		logger.write_out();
 #endif
 		return TRUE;
 	}
