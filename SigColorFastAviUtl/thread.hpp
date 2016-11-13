@@ -65,15 +65,15 @@ namespace parallel {
 		}
 		else {
 			const auto num = parallel::detail::abs_diff(end, begin);
-			const Index task_num = num / thread_num;
-			const Index task_rest = num % thread_num;
+			const auto task_num = num / thread_num;
+			const auto task_rest = num % thread_num;
 			std::vector<std::thread> th;
 			th.reserve(thread_num);
 			for (unsigned int i = 0; i < thread_num; ++i) {
 				th.emplace_back(
 					std::forward<Func>(f),
-					(i) ? i * task_num + task_rest + begin : begin,
-					(i + 1) * task_num + task_rest + begin,
+					(i) ? static_cast<Index>(i * task_num + task_rest + begin) : begin,
+					static_cast<Index>((i + 1) * task_num + task_rest + begin),
 					std::forward<Args>(args)...
 				);
 			}
@@ -126,8 +126,8 @@ namespace parallel {
 		}
 		else {
 			const auto num = parallel::detail::abs_diff(end, begin);
-			const Index task_num = num / thread_num;
-			const Index task_rest = num % thread_num;
+			const auto task_num = num / thread_num;
+			const auto task_rest = num % thread_num;
 			re.reserve(thread_num);
 			for (unsigned int i = 0; i < thread_num; ++i) {
 				re.push_back(std::async(
