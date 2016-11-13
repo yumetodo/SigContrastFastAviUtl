@@ -267,7 +267,6 @@ BOOL func_update_con(FILTER *fp, int status)
 		ST.change_param(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]));
 		break;
 	case FILTER_UPDATE_STATUS_CHECK:
-	{
 		if (fp->check[0] == 1)
 		{
 			fp->check[1] = 0;
@@ -280,9 +279,10 @@ BOOL func_update_con(FILTER *fp, int status)
 			fp->check[2] = 1;
 			fp->check[3] = 1;
 		}
-	}break;
+		break;
 	case FILTER_UPDATE_STATUS_CHECK + 1:
-	{
+	case FILTER_UPDATE_STATUS_CHECK + 2: 
+	case FILTER_UPDATE_STATUS_CHECK + 3: 
 		if (fp->check[1] == 1)
 		{
 			fp->check[0] = 0;
@@ -291,64 +291,36 @@ BOOL func_update_con(FILTER *fp, int status)
 		{
 			fp->check[0] = 1;
 		}
-	}break;
-	case FILTER_UPDATE_STATUS_CHECK + 2: 
-	{
-		if (fp->check[2] == 1)
-		{
-			fp->check[0] = 0;
-		}
-		if ((fp->check[1] + fp->check[2] + fp->check[3]) == 0)
-		{
-			fp->check[0] = 1;
-		}
-	}
 		break;
-	case FILTER_UPDATE_STATUS_CHECK + 3: 
-	{
-		if (fp->check[3] == 1)
-		{
-			fp->check[0] = 0;
-		}
-		if ((fp->check[1] + fp->check[2] + fp->check[3]) == 0)
-		{
-			fp->check[0] = 1;
-		}
-	}
-	break;
 #ifdef USECLOCK
 	case FILTER_UPDATE_STATUS_CHECK + 4:
-	{
 		if(0 == fp->check[4]) SetWindowText(fp->hwnd, PLUGIN_NAME_SCON);
-	}
-	break;
+		break;
 #endif
-	//default:
+	default:
 		//MessageBox(NULL, "func_update invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
 	}
 	fp->exfunc->filter_window_update(fp);
 
 	return TRUE;
 }
-BOOL func_WndProc_con(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp)
 // This is used for capturing mouse click, button states, and getting mouse coordinates
+BOOL func_WndProc_con(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp)
 {
-	//
+#ifdef USECLOCK
 	switch (message)
 	{
-	case WM_FILTER_MAIN_MOUSE_DOWN:
-		break;
-	case WM_FILTER_MAIN_MOUSE_MOVE:
-		break;
-	case WM_FILTER_FILE_CLOSE:
-		break;
-#ifdef USECLOCK
-	case WM_FILTER_EXPORT:
-	case WM_FILTER_SAVE_START:
-		disable_echo_benchmark(fp);
-		break;
-#endif
+		case WM_FILTER_EXPORT:
+		case WM_FILTER_SAVE_START:
+			disable_echo_benchmark(fp);
+			break;
+		//case WM_FILTER_MAIN_MOUSE_DOWN:
+		//case WM_FILTER_MAIN_MOUSE_MOVE:
+		//case WM_FILTER_FILE_CLOSE:
+		default:
+			break;
 	}
+#endif
 	return FALSE;
 }
 /**********************************************************/
@@ -471,7 +443,8 @@ BOOL func_update_sd(FILTER *fp, int status)
 	}
 	break;
 	case FILTER_UPDATE_STATUS_CHECK + 1:
-	{
+	case FILTER_UPDATE_STATUS_CHECK + 2: 
+	case FILTER_UPDATE_STATUS_CHECK + 3: 
 		if (fp->check[1] == 1)
 		{
 			fp->check[0] = 0;
@@ -480,64 +453,35 @@ BOOL func_update_sd(FILTER *fp, int status)
 		{
 			fp->check[0] = 1;
 		}
-	}
-	break;
-	case FILTER_UPDATE_STATUS_CHECK + 2: 
-	{
-		if (fp->check[2] == 1)
-		{
-			fp->check[0] = 0;
-		}
-		if ((fp->check[1] + fp->check[2] + fp->check[3]) == 0)
-		{
-			fp->check[0] = 1;
-		}
-	}
-	break;
-	case FILTER_UPDATE_STATUS_CHECK + 3: 
-	{
-		if (fp->check[3] == 1)
-		{
-			fp->check[0] = 0;
-		}
-		if ((fp->check[1] + fp->check[2] + fp->check[3]) == 0)
-		{
-			fp->check[0] = 1;
-		}
-	}
-	break;
+		break;
 #ifdef USECLOCK
 	case FILTER_UPDATE_STATUS_CHECK + 4:
-	{
 		if (0 == fp->check[4]) SetWindowText(fp->hwnd, PLUGIN_NAME_SDCON);
-	}
-	break;
+		break;
 #endif
+	default:
+		//MessageBox(NULL, "func_update invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
 	}
 	fp->exfunc->filter_window_update(fp);
 	return TRUE;
 }
-BOOL func_WndProc_sd(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp)
 // This is used for capturing mouse click, button states, and getting mouse coordinates
+BOOL func_WndProc_sd(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp)
 {
-	//
+#ifdef USECLOCK
 	switch (message)
 	{
-	case WM_FILTER_MAIN_MOUSE_DOWN:
-		break;
-	case WM_FILTER_MAIN_MOUSE_MOVE:
-		break;
-	case WM_FILTER_FILE_CLOSE:
-	{
-		break;
-	}
-#ifdef USECLOCK
 	case WM_FILTER_EXPORT:
 	case WM_FILTER_SAVE_START:
 		disable_echo_benchmark(fp);
 		break;
-#endif
+	//case WM_FILTER_MAIN_MOUSE_DOWN:
+	//case WM_FILTER_MAIN_MOUSE_MOVE:
+	//case WM_FILTER_FILE_CLOSE:
+	default:
+		break;
 	}
+#endif
 	return FALSE;
 }
 
