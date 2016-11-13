@@ -48,12 +48,13 @@ public:
 	bool operator[](check c) const noexcept { return any_of(c); }
 	int& operator[](track t) noexcept { return this->fp_->track[static_cast<std::size_t>(t)]; }
 	int& operator[](check c) noexcept { return this->fp_->check[static_cast<std::size_t>(c)]; }
-	void set_rgb(bool state) {
-		(*this)[check::R] = (*this)[check::G] = (*this)[check::B] = state;
-	}
+	void set_rgb(bool state) noexcept { (*this)[check::R] = (*this)[check::G] = (*this)[check::B] = state; }
+	bool notify_update_window() const noexcept { return 0 != this->fp_->exfunc->filter_window_update(this->fp_); }
 	void disable_benchmark() noexcept {
-		(*this)[check::echo_benchmark] = (*this)[check::save_benchmark] = false;
+		if ((*this)[check::disable_benchmark_during_export]) {
+			(*this)[check::echo_benchmark] = (*this)[check::save_benchmark] = false;
+			this->notify_update_window();
+		}
 	}
-	BOOL notify_update_window() const noexcept{ return this->fp_->exfunc->filter_window_update(this->fp_); }
 	HWND window_handle() const { return this->fp_->hwnd; }
 };

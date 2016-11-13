@@ -44,13 +44,6 @@ int		track_e[] = { 100, 30 };	//	maximum values
 
 											
 #ifdef USECLOCK
-static inline void disable_echo_benchmark(FILTER *fp) {
-	filter_proxy fc(fp);
-	if (fc[check::disable_benchmark_during_export]) {
-		fc.disable_benchmark();
-		fc.notify_update_window();
-	}
-}
 #	define	CHECK_N	7														//	total number of check box and button
 #else
 #	define	CHECK_N	4														//	total number of check box and button
@@ -195,7 +188,7 @@ namespace sigmoid_contrast {
 		switch (message){
 			case WM_FILTER_EXPORT:
 			case WM_FILTER_SAVE_START:
-				disable_echo_benchmark(fp);
+				filter_proxy(fp).disable_benchmark();
 				break;
 			//case WM_FILTER_MAIN_MOUSE_DOWN:
 			//case WM_FILTER_MAIN_MOUSE_MOVE:
@@ -209,7 +202,7 @@ namespace sigmoid_contrast {
 	BOOL save_start(FILTER* fp, int /*s*/, int /*e*/, void* /*editp*/)
 	{
 #ifdef USECLOCK
-		disable_echo_benchmark(fp);
+		filter_proxy(fp).disable_benchmark();
 #endif
 		return TRUE;
 	}
@@ -386,7 +379,7 @@ namespace sigmoid_decontrast {
 		{
 			case WM_FILTER_EXPORT:
 			case WM_FILTER_SAVE_START:
-				disable_echo_benchmark(fp);
+				filter_proxy(fp).disable_benchmark();
 				break;
 				//case WM_FILTER_MAIN_MOUSE_DOWN:
 				//case WM_FILTER_MAIN_MOUSE_MOVE:
@@ -400,7 +393,7 @@ namespace sigmoid_decontrast {
 	BOOL save_start(FILTER* fp, int /*s*/, int /*e*/, void* /*editp*/)
 	{
 #ifdef USECLOCK
-		disable_echo_benchmark(fp);
+		filter_proxy(fp).disable_benchmark();
 #endif
 		return TRUE;
 	}
