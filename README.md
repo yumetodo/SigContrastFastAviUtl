@@ -16,3 +16,27 @@ A lot of useless code that doesn't being compiled are left behind; Commented out
 * using ``std::thread`` for  parallelization/vectorization
 * Use table lookup to reduce calculation
 * Two plugins in a single AUF
+
+# Dependency
+## for AviUtl plugin
+
+**Nothing**. ImageMagick or OpenCV is not used.
+
+## for test
+
+- [iutest](https://github.com/srz-zumix/iutest) - c++ testing framework
+
+Use
+
+```sh
+git clone --recursive https://github.com/MaverickTse/SigContrastFastAviUtl.git
+```
+
+or 
+
+```sh
+git clone https://github.com/MaverickTse/SigContrastFastAviUtl.git
+git submodule update --init
+```
+
+to download dependency.
