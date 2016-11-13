@@ -4,6 +4,7 @@
 #include <vector>
 #include <limits>
 #include <future>
+#include <iterator>
 namespace parallel {
 	namespace detail {
 		template <typename T1, typename T2, std::enable_if_t<
@@ -110,6 +111,38 @@ namespace parallel {
 	template<typename Index, typename Func, typename ...Args, std::enable_if_t<std::is_signed<Index>::value, std::nullptr_t> = nullptr>
 	inline void par_for(Index num, Func&& f, Args&& ...args) {
 		if (0 < num) par_for<std::uintmax_t, Func, Index, Args...>(static_cast<std::uintmax_t>(num), std::forward<Func>(f), std::forward<Args>(args)...);
+	}
+	template<
+		typename RandomAccessIterator, typename Func, typename ...Args,
+		std::enable_if_t<
+			std::is_same<std::random_access_iterator_tag, typename std::iterator_traits<RandomAccessIterator>::iterator_category>::value, 
+			std::nullptr_t
+		> = nullptr
+	>
+	inline auto async_for(RandomAccessIterator begin, RandomAccessIterator end, Func&& f, Args&& ...args)
+		-> std::vector<std::future<std::result_of_t<std::decay_t<Func>(RandomAccessIterator, RandomAccessIterator, std::decay_t<Args>...)>>>
+	{
+		const unsigned int thread_num = std::thread::hardware_concurrency();
+		std::vector<std::future<std::result_of_t<std::decay_t<Func>(RandomAccessIterator, RandomAccessIterator, std::decay_t<Args>...)>>> re;
+		if (thread_num < 2) {//thread 非対応
+			re.push_back(std::async(std::launch::deferred, f, begin, end, std::forward<Args>(args)...));
+		}
+		else {
+			const auto num = std::distance(begin, end);
+			const auto task_num = num / thread_num;
+			const auto task_rest = num % thread_num;
+			re.reserve(thread_num);
+			for (unsigned int i = 0; i < thread_num; ++i) {
+				re.push_back(std::async(
+					std::launch::async,
+					std::forward<Func>(f),
+					(i) ? begin + (i * task_num + task_rest) : begin,
+					begin + ((i + 1) * task_num + task_rest),
+					std::forward<Args>(args)...
+				));
+			}
+		}
+		return re;
 	}
 	template<
 		typename Index, typename Func,
