@@ -45,14 +45,10 @@ int		track_e[] = { 100, 30 };	//	maximum values
 											
 #ifdef USECLOCK
 static inline void disable_echo_benchmark(FILTER *fp) {
-#if defined(_MSC_VER) && defined(_DEBUG)
-	using namespace std::string_literals;
-	const auto s = fp->name + "::disable_echo_benchmark fp->check[6]:"s + std::to_string(fp->check[6]) + '\n';
-	OutputDebugStringA(s.c_str());
-#endif
-	if (fp->check[6]) {
-		fp->check[4] = fp->check[5] = 0;//disable benchmark
-		fp->exfunc->filter_window_update(fp);
+	filter_proxy fc(fp);
+	if (fc[check::disable_benchmark_during_export]) {
+		fc.disable_benchmark();
+		fc.notify_update_window();
 	}
 }
 #	define	CHECK_N	7														//	total number of check box and button
@@ -95,58 +91,49 @@ namespace sigmoid_contrast {
 	}
 	BOOL update(FILTER* fp, int status)
 	{
+		filter_proxy fc(fp);
 		switch (status){
 			case FILTER_UPDATE_MIDTONE_TRACK:
 			case FILTER_UPDATE_STRENGTH_TRACK:
-				ST.change_param(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]));
+				ST.change_param(fc[track::midtone] / 100.0f, static_cast<float>(fc[track::strength]));
 				break;
 			case FILTER_UPDATE_Y_CHECK:
-				if (fp->check[0] == 1){
-					fp->check[1] = 0;
-					fp->check[2] = 0;
-					fp->check[3] = 0;
-				}
-				else{
-					fp->check[1] = 1;
-					fp->check[2] = 1;
-					fp->check[3] = 1;
-				}
+				fc.set_rgb(!fc[check::Y]);
 				break;
 			case FILTER_UPDATE_R_CHECK:
 			case FILTER_UPDATE_G_CHECK:
 			case FILTER_UPDATE_B_CHECK:
-				if (fp->check[1] == 1){
-					fp->check[0] = 0;
+				if (fc[check::Y]){
+					fc[check::Y] = 0;
 				}
-				else if ((fp->check[1] + fp->check[2] + fp->check[3]) == 0){
-					fp->check[0] = 1;
+				else if (fc.none_of(check::R, check::G, check::B)){
+					fc[check::Y] = 1;
 				}
 				break;
 #ifdef USECLOCK
 			case FILTER_UPDATE_ECHO_BENCHMARK_CHECK:
-				if (0 == fp->check[4]) SetWindowText(fp->hwnd, PLUGIN_NAME_SCON);
+				if (fc[check::echo_benchmark]) SetWindowText(fc.window_handle(), PLUGIN_NAME_SCON);
 				break;
 #endif
 			default:
 				//MessageBox(NULL, "func_update invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
 				break;
 		}
-		fp->exfunc->filter_window_update(fp);
+		fc.notify_update_window();
 
 		return TRUE;
 	}
 	BOOL proc(FILTER* fp, FILTER_PROC_INFO* fpip) // This is the main image manipulation function
 	{
-		/* Create a sigmoid table if none exists */
-		/* Should only be called after closing and then opening a new file */
+		const filter_proxy fc(fp);
 #ifdef USECLOCK
 		ch::time_point<ch::steady_clock> start_con;
-		if (fp->check[4] || fp->check[5]) start_con = ch::steady_clock::now();
+		if (fc.any_of(check::echo_benchmark, check::save_benchmark)) start_con = ch::steady_clock::now();
 #endif
 
-		ST.change_param(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]));
+		ST.change_param(fc[track::midtone] / 100.0f, static_cast<float>(fc[track::strength]));
 
-		if (!(fp->check[1] || fp->check[2] || fp->check[3])){
+		if (fc.none_of(check::R, check::G, check::B)){
 			/* Scan Y channel data */
 			parallel::par_for(fpip->h, [fpip](int begin, int end) {
 				for (int r = begin; r < end; r++)
@@ -154,50 +141,48 @@ namespace sigmoid_contrast {
 					for (int c = 0; c < fpip->w; c++)
 					{
 						PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
-						const short new_y = static_cast<short>(ST.lookup(px->y));
-						px->y = new_y;
+						px->y = ST.lookup(px->y);
 					}
 				}
 			});
 		}
 		else { //RGB mode
-			parallel::par_for(fpip->h, [fpip, fp](int begin, int end) {
+			parallel::par_for(fpip->h, [fpip, fc](int begin, int end) {
 				float buf[4] = { 0 };
 				for (int r = begin; r < end; r++){
 					for (int c = 0; c < fpip->w; c++){
 						PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
 						color_cvt::yc2rgb(buf, px);
 						// transform each channel is needed
-						if (fp->check[3]){
+						if (fc[check::B]){
 							buf[1] = static_cast<float>(ST.lookup(buf[1]));
 						}
-						if (fp->check[2]){
+						if (fc[check::G]){
 							buf[2] = static_cast<float>(ST.lookup(buf[2]));
 						}
-						if (fp->check[1]){
+						if (fc[check::R]){
 							buf[3] = static_cast<float>(ST.lookup(buf[3]));
 						}
-						// convert back
 						color_cvt::rgb2yc(px, buf);
 					}
 				}
 			});
 		}
 #ifdef USECLOCK
-		if (fp->check[4] || fp->check[5]){
+		if (fc.any_of(check::echo_benchmark, check::save_benchmark)){
 			const auto end_con = ch::steady_clock::now();
 			const auto elapsed = end_con - start_con;
-			if (fp->check[4]) {
+			if (fc[check::echo_benchmark]) {
 				using namespace std::chrono_literals;//UDLs : ms
 				static auto last_echo_time = end_con;
 				if (last_echo_time == end_con || last_echo_time + 150ms < end_con) {
 					const auto elapsed_s = std::to_string(ch::duration_cast<ch::microseconds>(elapsed).count());
-					SetWindowText(fp->hwnd, ("SCon:" + elapsed_s + "micro sec. @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
-					fp->exfunc->filter_window_update(fp);
+					SetWindowText(fc.window_handle(), ("SCon:" + elapsed_s + "micro sec. @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
+					fc.notify_update_window();
 					last_echo_time = end_con;
 				}
 			}
-			if (fp->check[5]) {
+			if (fc[check::save_benchmark]) {
 				logbuf.push_back(ch::duration_cast<ch::nanoseconds>(elapsed).count());
 			}
 		}
@@ -288,56 +273,49 @@ namespace sigmoid_decontrast {
 	}
 	BOOL update(FILTER* fp, int status)
 	{
+		filter_proxy fc(fp);
 		switch (status){
 			case FILTER_UPDATE_MIDTONE_TRACK:
 			case FILTER_UPDATE_STRENGTH_TRACK:
-				RST.change_param(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]));
+				RST.change_param(fc[track::midtone] / 100.0f, static_cast<float>(fc[track::strength]));
 				break;
 			case FILTER_UPDATE_Y_CHECK:
-				if (fp->check[0] == 1){
-					fp->check[1] = 0;
-					fp->check[2] = 0;
-					fp->check[3] = 0;
-				}
-				else{
-					fp->check[1] = 1;
-					fp->check[2] = 1;
-					fp->check[3] = 1;
-				}
+				fc.set_rgb(!fc[check::Y]);
 				break;
 			case FILTER_UPDATE_R_CHECK:
 			case FILTER_UPDATE_G_CHECK:
 			case FILTER_UPDATE_B_CHECK:
-				if (fp->check[1] == 1){
-					fp->check[0] = 0;
+				if (fc[check::Y]){
+					fc[check::Y] = 0;
 				}
-				else if ((fp->check[1] + fp->check[2] + fp->check[3]) == 0){
-					fp->check[0] = 1;
+				else if (fc.none_of(check::R, check::G, check::B)) {
+					fc[check::Y] = 1;
 				}
 				break;
 #ifdef USECLOCK
 			case FILTER_UPDATE_ECHO_BENCHMARK_CHECK:
-				if (0 == fp->check[4]) SetWindowText(fp->hwnd, PLUGIN_NAME_SDCON);
+				if (!fc[check::echo_benchmark]) SetWindowText(fc.window_handle(), PLUGIN_NAME_SDCON);
 				break;
 #endif
 			default:
 				//MessageBox(NULL, "func_update invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
 				break;
 		}
-		fp->exfunc->filter_window_update(fp);
+		fc.notify_update_window();
 		return TRUE;
 	}
 	BOOL proc(FILTER* fp, FILTER_PROC_INFO* fpip) // This is the main image manipulation function
 	{
+		const filter_proxy fc(fp);
 #ifdef USECLOCK
 		ch::time_point<ch::steady_clock> start_sd;
-		if (fp->check[4] || fp->check[5]) start_sd = ch::steady_clock::now();
+		if (fc.any_of(check::echo_benchmark, check::save_benchmark)) start_sd = ch::steady_clock::now();
 #endif
 
 		/* Create a Reverse sigmoid table if none exists */
-		RST.change_param(static_cast<float>(fp->track[0] / 100.0f), static_cast<float>(fp->track[1]));
+		RST.change_param(fc[track::midtone] / 100.0f, static_cast<float>(fc[track::strength]));
 
-		if (!(fp->check[1] || fp->check[2] || fp->check[3]))
+		if (fc.none_of(check::R, check::G, check::B))
 		{
 			/* Scan Y channel data */
 			parallel::par_for(fpip->h, [fpip](int begin, int end) {
@@ -346,15 +324,14 @@ namespace sigmoid_decontrast {
 					for (int c = 0; c < fpip->w; c++)
 					{
 						PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
-						const short new_y = static_cast<short>(RST.lookup(px->y));
-						px->y = new_y;
+						px->y = RST.lookup(px->y);
 					}
 				}
 			});
 		}
 		else //RGB mode
 		{
-			parallel::par_for(fpip->h, [fpip, fp](int begin, int end) {
+			parallel::par_for(fpip->h, [fpip, fc](int begin, int end) {
 				float buf[4] = { 0 };
 				for (int r = begin; r < end; r++)
 				{
@@ -364,19 +341,15 @@ namespace sigmoid_decontrast {
 						color_cvt::yc2rgb(buf, px);
 						// transform each channel is needed
 						//PIXEL t_rgb{ 0 };
-						if (fp->check[1])
-						{
+						if (fc[check::R]){
 							buf[3] = static_cast<float>(RST.lookup(buf[3]));
 						}
-						if (fp->check[2])
-						{
+						if (fc[check::G]){
 							buf[2] = static_cast<float>(RST.lookup(buf[2]));
 						}
-						if (fp->check[3])
-						{
+						if (fc[check::B]){
 							buf[1] = static_cast<float>(RST.lookup(buf[1]));
 						}
-						// convert back
 						color_cvt::rgb2yc(px, buf);
 					}
 				}
@@ -384,21 +357,20 @@ namespace sigmoid_decontrast {
 			});
 		}
 #ifdef USECLOCK
-		if (fp->check[4] || fp->check[5])
-		{
+		if (fc.any_of(check::echo_benchmark, check::save_benchmark)){
 			const auto end_sd = ch::steady_clock::now();
 			const auto elapsed = end_sd - start_sd;
-			if (fp->check[4]) {
+			if (fc[check::echo_benchmark]) {
 				using namespace std::chrono_literals;//UDLs : ms
 				static auto last_echo_time = end_sd;
 				if (last_echo_time == end_sd || last_echo_time + 150ms < end_sd) {
 					const auto elapsed_s = std::to_string(ch::duration_cast<ch::microseconds>(elapsed).count());
-					SetWindowText(fp->hwnd, ("SDeCon:" + elapsed_s + "micro sec. @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
-					fp->exfunc->filter_window_update(fp);
+					SetWindowText(fc.window_handle(), ("SDeCon:" + elapsed_s + "micro sec. @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
+					fc.notify_update_window();
 					last_echo_time = end_sd;
 				}
 			}
-			if (fp->check[5]) {
+			if (fc[check::save_benchmark]) {
 				logbuf.push_back(ch::duration_cast<ch::nanoseconds>(elapsed).count());
 			}
 		}
