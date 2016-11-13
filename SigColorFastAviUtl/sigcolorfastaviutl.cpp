@@ -5,7 +5,6 @@
 #include "RSigmoidTable.hpp"
 #include "thread.hpp"
 #include "color_cvt.hpp"
-#define USECLOCK
 #ifdef USECLOCK
 #include <chrono>
 #include <ctime>
