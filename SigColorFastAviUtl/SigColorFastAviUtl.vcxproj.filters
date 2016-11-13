@@ -39,6 +39,9 @@
     <ClInclude Include="time_logger.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="std_future.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sigcolorfastaviutl.cpp">

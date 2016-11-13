@@ -106,6 +106,7 @@
     <ClInclude Include="RSigmoidTable.hpp" />
     <ClInclude Include="sigmoid.hpp" />
     <ClInclude Include="SigmoidTable.hpp" />
+    <ClInclude Include="std_future.hpp" />
     <ClInclude Include="thread.hpp" />
     <ClInclude Include="time_logger.hpp" />
   </ItemGroup>
