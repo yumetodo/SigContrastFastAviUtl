@@ -7,8 +7,6 @@ Should be easy to build as there are no external dependency (except for VS2015 r
 # Warning: Dirty Code
 A lot of useless code that doesn't being compiled are left behind; Commented out block left behind; so beware.
 
-The Class "Histogram" is not being used at this moment.
-
 # Known issues
 * parameter change may not reflect properly if you change the parameters while the plugin is disabled.
 * It sucks: fork your own
