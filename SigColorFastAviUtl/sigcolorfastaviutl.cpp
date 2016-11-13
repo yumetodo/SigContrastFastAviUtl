@@ -66,12 +66,12 @@ namespace sigmoid_contrast {
 	time_logger logger("SCon", "log_sc.csv");
 #endif
 	BOOL init(FILTER* /*fp*/) noexcept { return TRUE; }
-	BOOL exit(FILTER* /*fp*/)
+	BOOL exit(FILTER* fp)
 	{
 		//DO NOT PUT MessageBox here, crash the application!
 		//MessageBox(NULL, "func_exit invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
 #ifdef USECLOCK
-		logger.write_out();
+		logger.write_out(filter_proxy(fp));
 #endif
 		return TRUE;
 	}
@@ -199,10 +199,10 @@ namespace sigmoid_contrast {
 #endif
 		return TRUE;
 	}
-	BOOL save_end(FILTER* /*fp*/, void* /*editp*/)
+	BOOL save_end(FILTER* fp, void* /*editp*/)
 	{
 #ifdef USECLOCK
-		logger.write_out();
+		logger.write_out(filter_proxy(fp));
 #endif
 		return TRUE;
 	}
@@ -239,11 +239,11 @@ namespace sigmoid_decontrast {
 #endif
 
 	BOOL init(FILTER* /*fp*/) noexcept { return TRUE; }
-	BOOL exit(FILTER* /*fp*/)
+	BOOL exit(FILTER* fp)
 	{
 		//DO NOT PUT MessageBox here, crash the application!
 #ifdef USECLOCK
-		logger.write_out();
+		logger.write_out(filter_proxy(fp));
 #endif
 		return TRUE;
 	}
@@ -381,10 +381,10 @@ namespace sigmoid_decontrast {
 		return TRUE;
 	}
 
-	BOOL save_end(FILTER* /*fp*/, void* /*editp*/)
+	BOOL save_end(FILTER* fp, void* /*editp*/)
 	{
 #ifdef USECLOCK
-		logger.write_out();
+		logger.write_out(filter_proxy(fp));
 #endif
 		return TRUE;
 	}
