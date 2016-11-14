@@ -9,6 +9,7 @@
 #include "filter_helper.hpp"
 #ifdef USECLOCK
 #include "time_logger.hpp"
+#include "window_title_manager.hpp"
 #include <chrono>
 #include <ctime>
 #include <ratio>
@@ -54,6 +55,7 @@ namespace sigmoid_contrast {
 #endif
 #ifdef USECLOCK
 	time_logger logger(plugin_name, "log_sc.csv");
+	window_title_manager window_title(plugin_name);
 #endif
 	BOOL init(FILTER* /*fp*/) noexcept { return TRUE; }
 	BOOL exit(FILTER* fp)
@@ -88,7 +90,7 @@ namespace sigmoid_contrast {
 				break;
 #ifdef USECLOCK
 			case FILTER_UPDATE_ECHO_BENCHMARK_CHECK:
-				if (fc[check::echo_benchmark]) SetWindowText(fc.window_handle(), plugin_name);
+				if (fc[check::echo_benchmark]) window_title.print_default(fc);
 				break;
 #endif
 			default:
@@ -148,19 +150,8 @@ namespace sigmoid_contrast {
 		if (fc.any_of(check::echo_benchmark, check::save_benchmark)){
 			const auto end_con = ch::steady_clock::now();
 			const auto elapsed = end_con - start_con;
-			if (fc[check::echo_benchmark]) {
-				using namespace std::chrono_literals;//UDLs : ms
-				static auto last_echo_time = end_con;
-				if (last_echo_time == end_con || last_echo_time + 150ms < end_con) {
-					const auto elapsed_s = std::to_string(ch::duration_cast<ch::microseconds>(elapsed).count());
-					SetWindowText(fc.window_handle(), ("SCon:" + elapsed_s + "micro sec. @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
-					fc.notify_update_window();
-					last_echo_time = end_con;
-				}
-			}
-			if (fc[check::save_benchmark]) {
-				logger.push(elapsed);
-			}
+			if (fc[check::echo_benchmark]) window_title.notify_print_time(fc, fpip, end_con, elapsed);
+			if (fc[check::save_benchmark]) logger.push(elapsed);
 		}
 #endif
 		return TRUE; //TRUE to update frame image. FALSE to skip refresh.
@@ -231,6 +222,7 @@ namespace sigmoid_decontrast {
 #endif
 #ifdef USECLOCK
 	time_logger logger(plugin_name, "log_sd.csv");
+	window_title_manager window_title(plugin_name);
 #endif
 
 	BOOL init(FILTER* /*fp*/) noexcept { return TRUE; }
@@ -265,7 +257,7 @@ namespace sigmoid_decontrast {
 				break;
 #ifdef USECLOCK
 			case FILTER_UPDATE_ECHO_BENCHMARK_CHECK:
-				if (!fc[check::echo_benchmark]) SetWindowText(fc.window_handle(), plugin_name);
+				if (!fc[check::echo_benchmark]) window_title.print_default(fc);
 				break;
 #endif
 			default:
@@ -331,19 +323,8 @@ namespace sigmoid_decontrast {
 		if (fc.any_of(check::echo_benchmark, check::save_benchmark)){
 			const auto end_sd = ch::steady_clock::now();
 			const auto elapsed = end_sd - start_sd;
-			if (fc[check::echo_benchmark]) {
-				using namespace std::chrono_literals;//UDLs : ms
-				static auto last_echo_time = end_sd;
-				if (last_echo_time == end_sd || last_echo_time + 150ms < end_sd) {
-					const auto elapsed_s = std::to_string(ch::duration_cast<ch::microseconds>(elapsed).count());
-					SetWindowText(fc.window_handle(), ("SDeCon:" + elapsed_s + "micro sec. @" + std::to_string(fpip->w) + "x" + std::to_string(fpip->h)).c_str());
-					fc.notify_update_window();
-					last_echo_time = end_sd;
-				}
-			}
-			if (fc[check::save_benchmark]) {
-				logger.push(elapsed);
-			}
+			if (fc[check::echo_benchmark]) window_title.notify_print_time(fc, fpip, end_sd, elapsed);
+			if (fc[check::save_benchmark]) logger.push(elapsed);
 		}
 #endif
 

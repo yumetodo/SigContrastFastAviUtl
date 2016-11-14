@@ -110,6 +110,7 @@
     <ClInclude Include="thread.hpp" />
     <ClInclude Include="time_logger.hpp" />
     <ClInclude Include="version.h" />
+    <ClInclude Include="window_title_manager.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sigcolorfastaviutl.cpp" />
