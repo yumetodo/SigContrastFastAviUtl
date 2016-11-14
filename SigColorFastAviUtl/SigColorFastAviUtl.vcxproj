@@ -103,7 +103,6 @@
     <ClInclude Include="color_cvt.hpp" />
     <ClInclude Include="filter.h" />
     <ClInclude Include="filter_helper.hpp" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="RSigmoidTable.hpp" />
     <ClInclude Include="sigmoid.hpp" />
     <ClInclude Include="SigmoidTable.hpp" />
