@@ -61,7 +61,6 @@ namespace sigmoid_contrast {
 	BOOL exit(FILTER* fp)
 	{
 		//DO NOT PUT MessageBox here, crash the application!
-		//MessageBox(NULL, "func_exit invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
 #ifdef USECLOCK
 		logger.write_out(fp);
 #endif
@@ -90,7 +89,7 @@ namespace sigmoid_contrast {
 				break;
 #ifdef USECLOCK
 			case FILTER_UPDATE_ECHO_BENCHMARK_CHECK:
-				if (fc[check::echo_benchmark]) window_title.print_default(fc);
+				if (!fc[check::echo_benchmark]) window_title.print_default(fc);
 				return TRUE;
 #endif
 			default:
@@ -366,7 +365,7 @@ namespace sigmoid_decontrast {
 		init,		//	initialization function, use NULL to skip
 		exit,		//	on-exit function, use NULL to skip
 		update,		//	invokes when when settings changed. use NULL to skip
-		nullptr,							//	for capturing dialog's control messages. Essential if you use button or auto uncheck some checkboxes.
+		WndProc,							//	for capturing dialog's control messages. Essential if you use button or auto uncheck some checkboxes.
 		nullptr, nullptr,						//	Reserved. Do not use.
 		nullptr,							//  pointer to extra data when FILTER_FLAG_EX_DATA is set
 		0,							//  extra data size
