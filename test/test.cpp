@@ -4,6 +4,8 @@
 #include "RSigmoidTable.h"
 #include "../SigColorFastAviUtl/SigmoidTable.hpp"
 #include "../SigColorFastAviUtl/RSigmoidTable.hpp"
+#include "../SigColorFastAviUtl/sigmoid.hpp"
+#include "random.hpp"
 IUTEST_TEST(SigmoidTableCompatibility, SigmoidTable_test) {
 	//0.0 <= midtone <= 1.0, 1.0 <= strength <= 30.0
 	SigmoidTable new_table;
@@ -66,6 +68,22 @@ IUTEST_TEST(SigmoidTableCompatibility, RSigmoidTable_test_out_of_range) {
 				//IUTEST_ASSERT_NEAR(static_cast<float>(old_table.lookup(i)), static_cast<float>(new_table.lookup(i)), 1.0f);
 			}
 		}
+	}
+}
+IUTEST_TEST(SigmoidCompatibility, sigmod_test) {
+	auto engine = create_engine();
+	static std::uniform_real_distribution<float> midtone(0.0, 1.0);
+	static std::uniform_real_distribution<float> strength(1.0, 30.0);
+	static std::uniform_int_distribution<std::uint16_t> u(0, 4096);
+	auto make_input = [&engine]() { return static_cast<float>(u(engine)) / 4096.0f; };
+	for (unsigned int i = 0; i < 100; ++i) {
+		const auto m = midtone(engine);
+		const auto s = strength(engine);
+		const auto u = make_input();
+		IUTEST_EXPECT(sigmoid(m, s, u) == sigmoid(m, s, u, sigmoid_pre(m, s)));
+	}
+	for (float m : {0.0f, 1.0f}) for (float s : {1.0f, 30.0f}) for (std::uint16_t u : {0, 4096}) {
+		IUTEST_EXPECT(sigmoid(m, s, static_cast<float>(u) / 4096.0f) == sigmoid(m, s, static_cast<float>(u) / 4096.0f, sigmoid_pre(m, s)));
 	}
 }
 int main(int argc, char** argv)

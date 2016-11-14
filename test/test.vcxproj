@@ -147,6 +147,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="LUT.cpp" />
+    <ClCompile Include="random.cpp" />
     <ClCompile Include="RSigmoidTable.cpp" />
     <ClCompile Include="SigmoidTable.cpp" />
     <ClCompile Include="test.cpp" />
@@ -154,6 +155,7 @@
   <ItemGroup>
     <ClInclude Include="LUT.h" />
     <ClInclude Include="no_min_max.h" />
+    <ClInclude Include="random.hpp" />
     <ClInclude Include="RSigmoidTable.h" />
     <ClInclude Include="SigmoidTable.h" />
   </ItemGroup>
