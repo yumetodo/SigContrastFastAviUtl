@@ -132,15 +132,9 @@ namespace sigmoid_contrast {
 						PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
 						color_cvt::yc2rgb(buf, px);
 						// transform each channel is needed
-						if (fc[check::B]){
-							buf[1] = static_cast<float>(ST.lookup(buf[1]));
-						}
-						if (fc[check::G]){
-							buf[2] = static_cast<float>(ST.lookup(buf[2]));
-						}
-						if (fc[check::R]){
-							buf[3] = static_cast<float>(ST.lookup(buf[3]));
-						}
+						if (fc[check::B]) buf[1] = static_cast<float>(ST.lookup(buf[1]));
+						if (fc[check::G]) buf[2] = static_cast<float>(ST.lookup(buf[2]));
+						if (fc[check::R]) buf[3] = static_cast<float>(ST.lookup(buf[3]));
 						color_cvt::rgb2yc(px, buf);
 					}
 				}
@@ -278,45 +272,31 @@ namespace sigmoid_decontrast {
 		/* Create a Reverse sigmoid table if none exists */
 		RST.change_param(fc[track::midtone] / 100.0f, static_cast<float>(fc[track::strength]));
 
-		if (fc.none_of(check::R, check::G, check::B))
-		{
+		if (fc.none_of(check::R, check::G, check::B)){
 			/* Scan Y channel data */
 			parallel::par_for(fpip->h, [fpip](int begin, int end) {
-				for (int r = begin; r < end; r++)
-				{
-					for (int c = 0; c < fpip->w; c++)
-					{
+				for (int r = begin; r < end; r++){
+					for (int c = 0; c < fpip->w; c++){
 						PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
 						px->y = RST.lookup(px->y);
 					}
 				}
 			});
 		}
-		else //RGB mode
-		{
+		else{ //RGB mode
 			parallel::par_for(fpip->h, [fpip, fc](int begin, int end) {
 				float buf[4] = { 0 };
-				for (int r = begin; r < end; r++)
-				{
-					for (int c = 0; c < fpip->w; c++)
-					{
+				for (int r = begin; r < end; r++){
+					for (int c = 0; c < fpip->w; c++){
 						PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
 						color_cvt::yc2rgb(buf, px);
 						// transform each channel is needed
-						//PIXEL t_rgb{ 0 };
-						if (fc[check::R]){
-							buf[3] = static_cast<float>(RST.lookup(buf[3]));
-						}
-						if (fc[check::G]){
-							buf[2] = static_cast<float>(RST.lookup(buf[2]));
-						}
-						if (fc[check::B]){
-							buf[1] = static_cast<float>(RST.lookup(buf[1]));
-						}
+						if (fc[check::R]) buf[3] = static_cast<float>(RST.lookup(buf[3]));
+						if (fc[check::G]) buf[2] = static_cast<float>(RST.lookup(buf[2]));
+						if (fc[check::B]) buf[1] = static_cast<float>(RST.lookup(buf[1]));
 						color_cvt::rgb2yc(px, buf);
 					}
 				}
-
 			});
 		}
 #ifdef USECLOCK
@@ -334,8 +314,7 @@ namespace sigmoid_decontrast {
 	BOOL WndProc(HWND /*hwnd*/, UINT message, WPARAM /*wparam*/, LPARAM /*lparam*/, void* /*editp*/, FILTER* fp)
 	{
 #ifdef USECLOCK
-		switch (message)
-		{
+		switch (message){
 			case WM_FILTER_EXPORT:
 			case WM_FILTER_SAVE_START:
 				filter_proxy(fp).disable_benchmark();
