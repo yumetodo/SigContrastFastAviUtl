@@ -103,15 +103,20 @@
     <ClInclude Include="color_cvt.hpp" />
     <ClInclude Include="filter.h" />
     <ClInclude Include="filter_helper.hpp" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="RSigmoidTable.hpp" />
     <ClInclude Include="sigmoid.hpp" />
     <ClInclude Include="SigmoidTable.hpp" />
     <ClInclude Include="std_future.hpp" />
     <ClInclude Include="thread.hpp" />
     <ClInclude Include="time_logger.hpp" />
+    <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sigcolorfastaviutl.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="SigColorFastAviUtl.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

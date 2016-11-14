@@ -1,6 +1,7 @@
 ﻿#define NOMINMAX
 #include <Windows.h>
 #include "filter.h" //please set this to AviUtl SDK's filter.h
+#include "version.h"
 #include "SigmoidTable.hpp"
 #include "RSigmoidTable.hpp"
 #include "thread.hpp"
@@ -14,18 +15,7 @@
 namespace ch = std::chrono;
 #endif
 
-
-#ifdef _DEBUG
-#define PLUGIN_NAME_SCON "SContrast DEBUG"
-#define VERSION_STR_SCON "SContrast(DEBUG) v0.3 by MaverickTse and Yumetodo"
-#define PLUGIN_NAME_SDCON "SDeContrast DEBUG"
-#define VERSION_STR_SDCON "SDeContrast(DEBUG) v0.3 by MaverickTse and Yumetodo"
-#else
-#define PLUGIN_NAME_SCON "SContrast"
-#define VERSION_STR_SCON "SContrast v0.3 by MaverickTse and Yumetodo"
-#define PLUGIN_NAME_SDCON "SDeContrast"
-#define VERSION_STR_SDCON "SDeContrast v0.3 by MaverickTse and Yumetodo"
-#endif
+static const char* plugin_version_str = SIG_COLOR_AUF_INFO " v" SIG_COLOR_VERSION_STR " by " SIG_COLOR_AUTHOR;
 
 // Define sliders
 // slider name
@@ -57,8 +47,13 @@ static_assert(std_future::size(check_name_en) == std_future::size(check_default)
 
 namespace sigmoid_contrast {
 	static SigmoidTable ST;
+#ifdef _DEBUG
+	static const char* plugin_name = "SContrast(DEBUG)";
+#else
+	static const char* plugin_name = "SContrast";
+#endif
 #ifdef USECLOCK
-	time_logger logger("SCon", "log_sc.csv");
+	time_logger logger(plugin_name, "log_sc.csv");
 #endif
 	BOOL init(FILTER* /*fp*/) noexcept { return TRUE; }
 	BOOL exit(FILTER* fp)
@@ -93,7 +88,7 @@ namespace sigmoid_contrast {
 				break;
 #ifdef USECLOCK
 			case FILTER_UPDATE_ECHO_BENCHMARK_CHECK:
-				if (fc[check::echo_benchmark]) SetWindowText(fc.window_handle(), PLUGIN_NAME_SCON);
+				if (fc[check::echo_benchmark]) SetWindowText(fc.window_handle(), plugin_name);
 				break;
 #endif
 			default:
@@ -205,7 +200,7 @@ namespace sigmoid_contrast {
 	static FILTER_DLL filter_info_en = {               // English UI filter info
 		FILTER_FLAG_EX_INFORMATION | FILTER_FLAG_PRIORITY_LOWEST,	//	filter flags, use bitwise OR to add more
 		0, 0,							//	dialogbox size
-		PLUGIN_NAME_SCON,				//	Filter plugin name
+		const_cast<char*>(plugin_name),				//	Filter plugin name
 		static_cast<int>(std_future::size(en_name)),						//	トラックバーの数 (0なら名前初期値等もNULLでよい)
 		const_cast<char**>(en_name),						//	slider label names in English
 		track_default,					//	トラックバーの初期値郡へのポインタ
@@ -221,7 +216,7 @@ namespace sigmoid_contrast {
 		nullptr, nullptr,						//	Reserved. Do not use.
 		nullptr,							//  pointer to extra data when FILTER_FLAG_EX_DATA is set
 		0,							//  extra data size
-		VERSION_STR_SCON,
+		const_cast<char*>(plugin_version_str),
 		//  pointer or c-string for full filter info when FILTER_FLAG_EX_INFORMATION is set.
 		save_start,	//	invoke just before saving starts. NULL to skip
 		save_end,		//	invoke just after saving ends. NULL to skip
@@ -229,8 +224,13 @@ namespace sigmoid_contrast {
 }
 namespace sigmoid_decontrast {
 	static RSigmoidTable RST;
+#ifdef _DEBUG
+	static const char* plugin_name = "SDeContrast(DEBUG)";
+#else
+	static const char* plugin_name = "SDeContrast";
+#endif
 #ifdef USECLOCK
-	time_logger logger("SDeCon", "log_sd.csv");
+	time_logger logger(plugin_name, "log_sd.csv");
 #endif
 
 	BOOL init(FILTER* /*fp*/) noexcept { return TRUE; }
@@ -265,7 +265,7 @@ namespace sigmoid_decontrast {
 				break;
 #ifdef USECLOCK
 			case FILTER_UPDATE_ECHO_BENCHMARK_CHECK:
-				if (!fc[check::echo_benchmark]) SetWindowText(fc.window_handle(), PLUGIN_NAME_SDCON);
+				if (!fc[check::echo_benchmark]) SetWindowText(fc.window_handle(), plugin_name);
 				break;
 #endif
 			default:
@@ -387,7 +387,7 @@ namespace sigmoid_decontrast {
 	static FILTER_DLL filter_info_en = {               // English UI filter info
 		FILTER_FLAG_EX_INFORMATION | FILTER_FLAG_PRIORITY_LOWEST,	//	filter flags, use bitwise OR to add more
 		0, 0,							//	dialogbox size
-		PLUGIN_NAME_SDCON,				//	Filter plugin name
+		const_cast<char*>(plugin_name),				//	Filter plugin name
 		static_cast<int>(std_future::size(en_name)),						//	トラックバーの数 (0なら名前初期値等もNULLでよい)
 		const_cast<char**>(en_name),						//	slider label names in English
 		track_default,					//	トラックバーの初期値郡へのポインタ
@@ -403,7 +403,7 @@ namespace sigmoid_decontrast {
 		nullptr, nullptr,						//	Reserved. Do not use.
 		nullptr,							//  pointer to extra data when FILTER_FLAG_EX_DATA is set
 		0,							//  extra data size
-		VERSION_STR_SDCON,
+		const_cast<char*>(plugin_version_str),
 		//  pointer or c-string for full filter info when FILTER_FLAG_EX_INFORMATION is set.
 		save_start,	//	invoke just before saving starts. NULL to skip
 		save_end,	//	invoke just after saving ends. NULL to skip
