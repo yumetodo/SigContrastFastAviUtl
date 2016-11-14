@@ -91,14 +91,16 @@ namespace sigmoid_contrast {
 #ifdef USECLOCK
 			case FILTER_UPDATE_ECHO_BENCHMARK_CHECK:
 				if (fc[check::echo_benchmark]) window_title.print_default(fc);
-				break;
+				return TRUE;
 #endif
 			default:
 				//MessageBox(NULL, "func_update invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
-				break;
+				return TRUE;
 		}
+#ifdef USECLOCK
+		logger.clear();
+#endif
 		fc.notify_update_window();
-
 		return TRUE;
 	}
 	BOOL proc(FILTER* fp, FILTER_PROC_INFO* fpip) // This is the main image manipulation function
@@ -157,6 +159,7 @@ namespace sigmoid_contrast {
 			case WM_FILTER_EXPORT:
 			case WM_FILTER_SAVE_START:
 				filter_proxy(fp).disable_benchmark();
+				logger.clear();
 				break;
 			//case WM_FILTER_MAIN_MOUSE_DOWN:
 			//case WM_FILTER_MAIN_MOUSE_MOVE:
@@ -252,12 +255,15 @@ namespace sigmoid_decontrast {
 #ifdef USECLOCK
 			case FILTER_UPDATE_ECHO_BENCHMARK_CHECK:
 				if (!fc[check::echo_benchmark]) window_title.print_default(fc);
-				break;
+				return TRUE;
 #endif
 			default:
 				//MessageBox(NULL, "func_update invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
-				break;
+				return TRUE;
 		}
+#ifdef USECLOCK
+		logger.clear();
+#endif
 		fc.notify_update_window();
 		return TRUE;
 	}
@@ -318,6 +324,7 @@ namespace sigmoid_decontrast {
 			case WM_FILTER_EXPORT:
 			case WM_FILTER_SAVE_START:
 				filter_proxy(fp).disable_benchmark();
+				logger.clear();
 				break;
 				//case WM_FILTER_MAIN_MOUSE_DOWN:
 				//case WM_FILTER_MAIN_MOUSE_MOVE:
