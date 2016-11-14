@@ -48,10 +48,11 @@ inline void RSigmoidTable::change_param(float midtone, float strength) noexcept
 	//clear array for checking multiple insertation at function `RSigmoidTable::insert_to_table`
 	std::fill(table_.begin(), table_.end(), 0);
 
+	const auto pre_sigmoid = sigmoid_pre(midtone, strength);
 	value_type pre = 0;
 	for (value_type y = 1; y <= bin; ++y)
 	{
-		const auto x = static_cast<value_type>(multiplier * sigmoid(midtone, strength, static_cast<float>(y) / multiplier));
+		const auto x = static_cast<value_type>(multiplier * sigmoid(midtone, strength, static_cast<float>(y) / multiplier, pre_sigmoid));
 		for (value_type i = pre + 1; i <= x; ++i) this->insert_to_table(i, y);//fill blanc and insert new value
 		pre = x;
 	}
