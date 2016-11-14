@@ -27,38 +27,33 @@ namespace ch = std::chrono;
 #define VERSION_STR_SDCON "SDeContrast v0.3 by MaverickTse and Yumetodo"
 #endif
 
-
-
-
 // Define sliders
-#define	TRACK_N	2 //	slider count
 // slider name
-char* en_name[] = { "Midtone", "Strength" };
+static const char* en_name[] =	{ "Midtone",	"Strength" };
 
+static int	track_default[] =	{ 50,			5 };	//	default values
+static int	track_s[] =			{ 0,			1 };	//	minimum values
+static int	track_e[] =			{ 100,			30 };	//	maximum values
+static_assert(
+	std_future::size(en_name) == std_future::size(track_default)
+	&& std_future::size(track_default) == std_future::size(track_s)
+	&& std_future::size(track_s) == std_future::size(track_e),
+	"error"
+);
 
-int		track_default[] = { 50, 5 };	//	default values
-int		track_s[] = { 0, 1 };	//	minimum values
-int		track_e[] = { 100, 30 };	//	maximum values
-
-											
-#ifdef USECLOCK
-#	define	CHECK_N	7														//	total number of check box and button
-#else
-#	define	CHECK_N	4														//	total number of check box and button
-#endif
-char	*check_name_en[CHECK_N] = { 
+static const char* check_name_en[] = {
 	"Y", "R", "G", "B"
 #ifdef USECLOCK
 	, "Echo benchmark", "Save benchmark", "Disable benchmark during export"
 #endif
 };				//	label name
-int		check_default[CHECK_N] = {
+static int	check_default[] = {
 	1, 0, 0, 0
 #ifdef USECLOCK
 	,1,0,1
 #endif
 };				//	for checkbox: 0(unchecked) or 1(checked); for button: must be -1
-static_assert((sizeof(check_name_en) / sizeof(*check_name_en)) == (sizeof(check_default) / sizeof(*check_default)), "error");
+static_assert(std_future::size(check_name_en) == std_future::size(check_default), "error");
 
 namespace sigmoid_contrast {
 	static SigmoidTable ST;
@@ -211,21 +206,21 @@ namespace sigmoid_contrast {
 		FILTER_FLAG_EX_INFORMATION | FILTER_FLAG_PRIORITY_LOWEST,	//	filter flags, use bitwise OR to add more
 		0, 0,							//	dialogbox size
 		PLUGIN_NAME_SCON,				//	Filter plugin name
-		TRACK_N,						//	トラックバーの数 (0なら名前初期値等もNULLでよい)
-		en_name,						//	slider label names in English
+		static_cast<int>(std_future::size(en_name)),						//	トラックバーの数 (0なら名前初期値等もNULLでよい)
+		const_cast<char**>(en_name),						//	slider label names in English
 		track_default,					//	トラックバーの初期値郡へのポインタ
 		track_s, track_e,				//	トラックバーの数値の下限上限 (NULLなら全て0～256)
-		CHECK_N,						//	チェックボックスの数 (0なら名前初期値等もNULLでよい)
-		check_name_en,					//	チェックボックスの名前郡へのポインタ
+		static_cast<int>(std_future::size(check_default)),						//	チェックボックスの数 (0なら名前初期値等もNULLでよい)
+		const_cast<char**>(check_name_en),					//	チェックボックスの名前郡へのポインタ
 		check_default,					//	チェックボックスの初期値郡へのポインタ
 		proc,			//	main filter function, use NULL to skip
 		init,			//	initialization function, use NULL to skip
 		exit,			//	on-exit function, use NULL to skip
 		update,		//	invokes when when settings changed. use NULL to skip
 		WndProc,		//	for capturing dialog's control messages. Essential if you use button or auto uncheck some checkboxes.
-		NULL, NULL,						//	Reserved. Do not use.
-		NULL,							//  pointer to extra data when FILTER_FLAG_EX_DATA is set
-		NULL,							//  extra data size
+		nullptr, nullptr,						//	Reserved. Do not use.
+		nullptr,							//  pointer to extra data when FILTER_FLAG_EX_DATA is set
+		0,							//  extra data size
 		VERSION_STR_SCON,
 		//  pointer or c-string for full filter info when FILTER_FLAG_EX_INFORMATION is set.
 		save_start,	//	invoke just before saving starts. NULL to skip
@@ -393,21 +388,21 @@ namespace sigmoid_decontrast {
 		FILTER_FLAG_EX_INFORMATION | FILTER_FLAG_PRIORITY_LOWEST,	//	filter flags, use bitwise OR to add more
 		0, 0,							//	dialogbox size
 		PLUGIN_NAME_SDCON,				//	Filter plugin name
-		TRACK_N,						//	トラックバーの数 (0なら名前初期値等もNULLでよい)
-		en_name,						//	slider label names in English
+		static_cast<int>(std_future::size(en_name)),						//	トラックバーの数 (0なら名前初期値等もNULLでよい)
+		const_cast<char**>(en_name),						//	slider label names in English
 		track_default,					//	トラックバーの初期値郡へのポインタ
 		track_s, track_e,				//	トラックバーの数値の下限上限 (NULLなら全て0～256)
-		CHECK_N,						//	チェックボックスの数 (0なら名前初期値等もNULLでよい)
-		check_name_en,					//	チェックボックスの名前郡へのポインタ
+		static_cast<int>(std_future::size(check_default)),						//	チェックボックスの数 (0なら名前初期値等もNULLでよい)
+		const_cast<char**>(check_name_en),					//	チェックボックスの名前郡へのポインタ
 		check_default,					//	チェックボックスの初期値郡へのポインタ
 		proc,		//	main filter function, use NULL to skip
 		init,		//	initialization function, use NULL to skip
 		exit,		//	on-exit function, use NULL to skip
 		update,		//	invokes when when settings changed. use NULL to skip
-		NULL,							//	for capturing dialog's control messages. Essential if you use button or auto uncheck some checkboxes.
-		NULL, NULL,						//	Reserved. Do not use.
-		NULL,							//  pointer to extra data when FILTER_FLAG_EX_DATA is set
-		NULL,							//  extra data size
+		nullptr,							//	for capturing dialog's control messages. Essential if you use button or auto uncheck some checkboxes.
+		nullptr, nullptr,						//	Reserved. Do not use.
+		nullptr,							//  pointer to extra data when FILTER_FLAG_EX_DATA is set
+		0,							//  extra data size
 		VERSION_STR_SDCON,
 		//  pointer or c-string for full filter info when FILTER_FLAG_EX_INFORMATION is set.
 		save_start,	//	invoke just before saving starts. NULL to skip
