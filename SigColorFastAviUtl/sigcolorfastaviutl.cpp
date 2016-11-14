@@ -147,7 +147,7 @@ namespace sigmoid_contrast {
 			const auto end_con = ch::steady_clock::now();
 			const auto elapsed = end_con - start_con;
 			if (fc[check::echo_benchmark]) window_title.notify_print_time(fc, fpip, end_con, elapsed);
-			if (fc[check::save_benchmark]) logger.push(elapsed);
+			if (fc[check::save_benchmark]) logger.push(elapsed, fpip);
 		}
 #endif
 		return TRUE; //TRUE to update frame image. FALSE to skip refresh.
@@ -310,7 +310,7 @@ namespace sigmoid_decontrast {
 			const auto end_sd = ch::steady_clock::now();
 			const auto elapsed = end_sd - start_sd;
 			if (fc[check::echo_benchmark]) window_title.notify_print_time(fc, fpip, end_sd, elapsed);
-			if (fc[check::save_benchmark]) logger.push(elapsed);
+			if (fc[check::save_benchmark]) logger.push(elapsed, fpip);
 		}
 #endif
 
