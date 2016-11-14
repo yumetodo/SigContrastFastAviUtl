@@ -147,4 +147,5 @@ public:
 		}
 		this->logbuf_.clear();
 	}
+	void write_out(FILTER* fp) { return write_out(filter_proxy(fp)); }
 };

@@ -63,7 +63,7 @@ namespace sigmoid_contrast {
 		//DO NOT PUT MessageBox here, crash the application!
 		//MessageBox(NULL, "func_exit invoked!", "DEMO", MB_OK | MB_ICONINFORMATION);
 #ifdef USECLOCK
-		logger.write_out(filter_proxy(fp));
+		logger.write_out(fp);
 #endif
 		return TRUE;
 	}
@@ -177,7 +177,7 @@ namespace sigmoid_contrast {
 	BOOL save_end(FILTER* fp, void* /*editp*/)
 	{
 #ifdef USECLOCK
-		logger.write_out(filter_proxy(fp));
+		logger.write_out(fp);
 #endif
 		return TRUE;
 	}
@@ -224,7 +224,7 @@ namespace sigmoid_decontrast {
 	{
 		//DO NOT PUT MessageBox here, crash the application!
 #ifdef USECLOCK
-		logger.write_out(filter_proxy(fp));
+		logger.write_out(fp);
 #endif
 		return TRUE;
 	}
@@ -339,7 +339,7 @@ namespace sigmoid_decontrast {
 	BOOL save_end(FILTER* fp, void* /*editp*/)
 	{
 #ifdef USECLOCK
-		logger.write_out(filter_proxy(fp));
+		logger.write_out(fp);
 #endif
 		return TRUE;
 	}
