@@ -28,7 +28,8 @@ static int	track_e[] =			{ 100,			30 };	//	maximum values
 static_assert(
 	std_future::size(en_name) == std_future::size(track_default)
 	&& std_future::size(track_default) == std_future::size(track_s)
-	&& std_future::size(track_s) == std_future::size(track_e),
+	&& std_future::size(track_s) == std_future::size(track_e)
+	&& std_future::size(track_s) == static_cast<std::size_t>(track::size),
 	"error"
 );
 
@@ -44,7 +45,11 @@ static int	check_default[] = {
 	,1,0,1
 #endif
 };				//	for checkbox: 0(unchecked) or 1(checked); for button: must be -1
-static_assert(std_future::size(check_name_en) == std_future::size(check_default), "error");
+static_assert(
+	std_future::size(check_name_en) == std_future::size(check_default)
+	&& std_future::size(check_name_en) == static_cast<std::size_t>(check::size),
+	"error"
+);
 
 namespace sigmoid_contrast {
 	static SigmoidTable ST;
@@ -115,10 +120,8 @@ namespace sigmoid_contrast {
 		if (fc.none_of(check::R, check::G, check::B)){
 			/* Scan Y channel data */
 			parallel::par_for(fpip->h, [fpip](int begin, int end) {
-				for (int r = begin; r < end; r++)
-				{
-					for (int c = 0; c < fpip->w; c++)
-					{
+				for (int r = begin; r < end; r++){
+					for (int c = 0; c < fpip->w; c++){
 						PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
 						px->y = ST.lookup(px->y);
 					}

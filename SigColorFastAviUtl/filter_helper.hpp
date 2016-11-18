@@ -7,7 +7,8 @@
 #include "filter.h"
 enum class track : std::uint8_t {
 	midtone = 0,
-	strength = 1
+	strength = 1,
+	size
 };
 enum class check : std::uint8_t {
 	Y = 0,
@@ -19,6 +20,7 @@ enum class check : std::uint8_t {
 	save_benchmark = 5,
 	disable_benchmark_during_export = 6,
 #endif
+	size
 };
 enum filter_update_track_status : int {
 	FILTER_UPDATE_MIDTONE_TRACK = FILTER_UPDATE_STATUS_TRACK + static_cast<int>(track::midtone),
