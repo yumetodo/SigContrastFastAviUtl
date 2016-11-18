@@ -14,13 +14,16 @@ namespace parallel {
 		static inline constexpr auto abs_diff(const T1& a, const T2& b) noexcept
 			-> std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>
 		{
-			return (a < b) 
-				? (0 < b && a < std::numeric_limits<T2>::min() + b) 
-					? static_cast<std::make_unsigned_t<T2>>(b) + static_cast<std::make_unsigned_t<T2>>(-a)
-					: static_cast<std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>>(b - a)
-				: (0 < a && b < std::numeric_limits<T1>::min() + a)
-					? static_cast<std::make_unsigned_t<T2>>(a) + static_cast<std::make_unsigned_t<T2>>(-b)
-					: static_cast<std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>>(a - b);
+			return (b < a) 
+				? abs_diff(a, b)
+				: (b <= 0 || std::numeric_limits<T2>::min() + b <= a) 
+					? static_cast<std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>>(b - a)
+					//prevent overflow
+					: (std::numeric_limits<T2>::min() != a)
+						? static_cast<std::make_unsigned_t<T2>>(b) + static_cast<std::make_unsigned_t<T2>>(-a)
+						: (-std::numeric_limits<T2>::max() == std::numeric_limits<T2>::min() + 1)
+							? std::numeric_limits<std::make_unsigned_t<T2>>::min()
+							: throw std::invalid_argument();
 		}
 		template <typename T1, typename T2, std::enable_if_t<
 			std::is_unsigned<T1>::value && std::is_signed<T2>::value,
