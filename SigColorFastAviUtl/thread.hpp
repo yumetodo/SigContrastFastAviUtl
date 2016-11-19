@@ -11,18 +11,43 @@ namespace parallel {
 			std::is_signed<T1>::value && std::is_signed<T2>::value,
 			std::nullptr_t
 		> = nullptr>
-		static inline constexpr auto abs_diff(const T1& a, const T2& b) noexcept
+		static inline constexpr auto abs_diff(const T1& a, const T2& b) 
+			noexcept(
+				(
+					std::numeric_limits<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>::min() + 1
+					== -std::numeric_limits<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>::max()
+				) || (
+					std::numeric_limits<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>::min()
+					== -std::numeric_limits<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>::max()
+				)
+			)
 			-> std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>
 		{
+			using lim = std::numeric_limits<T2>;
+			using utype = std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>;
+			using ulim = std::numeric_limits<utype>;
 			return (b < a) 
 				? abs_diff(a, b)
-				: (b <= 0 || std::numeric_limits<T2>::min() + b <= a) 
-					? static_cast<std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>>(b - a)
+				: (b <= 0 || lim::min() + b <= a)
+					? static_cast<utype>(b - a)
 					//prevent overflow
-					: (std::numeric_limits<T2>::min() != a)
-						? static_cast<std::make_unsigned_t<T2>>(b) + static_cast<std::make_unsigned_t<T2>>(-a)
-						: (-std::numeric_limits<T2>::max() == std::numeric_limits<T2>::min() + 1)
-							? std::numeric_limits<std::make_unsigned_t<T2>>::min()
+					//http://qiita.com/a4lg/items/bc4d2cfbce22fe749589
+					//-std::numeric_limits<T>::min() < std::numeric_limits<T>::max() : iregal after C99
+					//std::numeric_limits<T>::min() < -std::numeric_limits<T>::max() : most familiar behavior
+					//std::numeric_limits<T>::min() = -std::numeric_limits<T>::max() : possible
+					//note: b is positive
+					: (-lim::max() <= a)
+						//``-a`` is no problem
+						? static_cast<utype>(b) + static_cast<std::make_unsigned_t<T2>>(-a)
+						//std::numeric_limits<T>::min() <= a < -std::numeric_limits<T>::max()
+						//(try to store rest)  (----------------storable max num----------------)
+						: ((a - lim::min()) <= (ulim::max() - lim::max() - static_cast<utype>(b)))
+							//can store
+							? static_cast<utype>(b) + static_cast<utype>(lim::max()) + static_cast<utype>((-lim::max()) - a)
+							//when processing system doesn't use two's complement and 
+							//std::numeric_limits<T>::min() < -std::numeric_limits<T>::max()
+							//there is possibility no way to store result.
+							//In that case, we throw exception.
 							: throw std::invalid_argument();
 		}
 		template <typename T1, typename T2, std::enable_if_t<
