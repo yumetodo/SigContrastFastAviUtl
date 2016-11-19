@@ -37,9 +37,17 @@ namespace math {
 			//-std::numeric_limits<T>::min() < std::numeric_limits<T>::max() : iregal after C99
 			//std::numeric_limits<T>::min() < -std::numeric_limits<T>::max() : most familiar behavior
 			//std::numeric_limits<T>::min() = -std::numeric_limits<T>::max() : possible
-			//note: a is positive
+			//note: 0 <= a, b < 0
+			//
+			//lim::min()   -lim::max()          0                  a            lim::max()
+			//    |             |               |                  |                |
+			//----+-------------+-----.......---+------.......-----+----.......-----+-----
 			return (-lim::max() <= b)
 				//``-b`` is no problem
+				//
+				//lim::min()   -lim::max()          b                  0
+				//    |             |               |                  |
+				//----+-------------+-----.......---+------.......-----+----.......
 				? static_cast<utype>(a) + static_cast<std::make_unsigned_t<T2>>(-b)
 				//std::numeric_limits<T>::min() <= b < -std::numeric_limits<T>::max()
 				: 
