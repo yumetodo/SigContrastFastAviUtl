@@ -4,19 +4,14 @@
 #include <stdexcept>
 namespace math {
 	namespace detail {
-		template<typename T1, typename T2>
-		struct max_type : std::conditional<(sizeof(T1) < sizeof(T2)), T2, T1> {};
-		template<typename T1, typename T2>
-		using max_type_t = typename max_type<T1, T2>::type;
-		template<typename T1, typename T2, std::enable_if_t<sizeof(T1) == sizeof(T2), std::nullptr_t> = nullptr>
-		constexpr bool abs_diff_can_noexcept() {
-			return std::numeric_limits<max_type_t<T1, T2>>::min() + 1 == -std::numeric_limits<max_type_t<T1, T2>>::max()
-				|| std::numeric_limits<max_type_t<T1, T2>>::min() == -std::numeric_limits<max_type_t<T1, T2>>::max();
+		constexpr bool is_two_s_complement() noexcept {
+			return std::numeric_limits<int>::min() + 1 == -std::numeric_limits<int>::max();
 		}
-		template<typename T1, typename T2, std::enable_if_t<sizeof(T1) != sizeof(T2), std::nullptr_t> = nullptr>
-		constexpr bool abs_diff_can_noexcept() {
-			return std::numeric_limits<max_type_t<T1, T2>>::min() + 1 == -std::numeric_limits<max_type_t<T1, T2>>::max()
-				|| std::numeric_limits<max_type_t<T1, T2>>::min() == -std::numeric_limits<max_type_t<T1, T2>>::max();
+		constexpr bool is_one_s_complement_like() noexcept {
+			return std::numeric_limits<int>::min() == -std::numeric_limits<int>::max();
+		}
+		constexpr bool abs_diff_both_signed_can_noexcept() noexcept {
+			return is_two_s_complement() || is_one_s_complement_like();
 		}
 		/**
 		* @param a bigger unsigned num
@@ -26,7 +21,7 @@ namespace math {
 			std::is_unsigned<T1>::value && std::is_signed<T2>::value,
 			std::nullptr_t
 		> = nullptr>
-		static inline auto abs_diff_impl(const T1& a, const T2& b) noexcept(detail::abs_diff_can_noexcept<T1, T2>())
+		static inline auto abs_diff_impl(const T1& a, const T2& b)
 			->std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>
 		{
 			using lim = std::numeric_limits<T2>;
@@ -50,11 +45,14 @@ namespace math {
 				//----+-------------+-----.......---+------.......-----+----.......
 				? static_cast<utype>(a) + static_cast<std::make_unsigned_t<T2>>(-b)
 				//std::numeric_limits<T>::min() <= b < -std::numeric_limits<T>::max()
-				: 
+				//lim::min()        b          -lim::max()             0
+				//    |             |               |                  |
+				//----+-------------+-----.......---+------.......-----+----.......
+				:
 				(
 					(lim::max() < (ulim::max() - static_cast<utype>(a)))
-					//	(try to store rest) (----------------storable max num----------------)
-					&& ((b - lim::min()) <= (ulim::max() - lim::max() - static_cast<utype>(a)))
+					//  (---------try to store rest---------)    (----------------storable max num----------------)
+					&& (static_cast<utype>((-lim::max()) - b) <= (ulim::max() - lim::max() - static_cast<utype>(a)))
 				)
 					//can store
 					? static_cast<utype>(a) + static_cast<utype>(lim::max()) + static_cast<utype>((-lim::max()) - b)
@@ -69,7 +67,7 @@ namespace math {
 		std::is_signed<T1>::value && std::is_signed<T2>::value,
 		std::nullptr_t
 	> = nullptr>
-	static inline constexpr auto abs_diff(const T1& a, const T2& b) noexcept(detail::abs_diff_can_noexcept<T1, T2>::value)
+	static inline constexpr auto abs_diff(const T1& a, const T2& b) noexcept(detail::abs_diff_both_signed_can_noexcept())
 		->std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>
 	{
 		using lim = std::numeric_limits<T2>;
@@ -85,7 +83,7 @@ namespace math {
 		std::is_unsigned<T1>::value && std::is_signed<T2>::value,
 		std::nullptr_t
 	> = nullptr>
-	static inline constexpr auto abs_diff(const T1& a, const T2& b) noexcept
+	static inline constexpr auto abs_diff(const T1& a, const T2& b)
 		->std::conditional_t<(sizeof(T1) < sizeof(T2)), std::make_unsigned_t<T2>, T1>
 	{
 		return (a < b)
@@ -98,7 +96,7 @@ namespace math {
 		std::is_signed<T1>::value && std::is_unsigned<T2>::value,
 		std::nullptr_t
 	> = nullptr>
-	static inline constexpr auto abs_diff(const T1& a, const T2& b) noexcept
+	static inline constexpr auto abs_diff(const T1& a, const T2& b)
 		->std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, std::make_unsigned_t<T1>>
 	{
 		return abs_diff(b, a);
