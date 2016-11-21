@@ -42,7 +42,9 @@ namespace math {
 				//lim::min()   -lim::max()          b                  0
 				//    |             |               |                  |
 				//----+-------------+-----.......---+------.......-----+----.......
-				? static_cast<utype>(a) + static_cast<std::make_unsigned_t<T2>>(-b)
+				? (static_cast<utype>(-b) <= (ulim::max() - a))
+					? static_cast<utype>(a) + static_cast<utype>(-b)
+					: throw std::invalid_argument("cannot store result.")
 				//note: std::numeric_limits<T>::min() <= b < -std::numeric_limits<T>::max()
 				//lim::min()        b          -lim::max()             0
 				//    |             |               |                  |
