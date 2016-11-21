@@ -43,7 +43,9 @@ namespace math {
 				//    |             |               |                  |
 				//----+-------------+-----.......---+------.......-----+----.......
 				? (static_cast<utype>(-b) <= (ulim::max() - a))
+					//can store
 					? static_cast<utype>(a) + static_cast<utype>(-b)
+					//There is no possibility when ``a`` is signed number before a was passed to this fuction.
 					: throw std::invalid_argument("cannot store result.")
 				//note: std::numeric_limits<T>::min() <= b < -std::numeric_limits<T>::max()
 				//lim::min()        b          -lim::max()             0
