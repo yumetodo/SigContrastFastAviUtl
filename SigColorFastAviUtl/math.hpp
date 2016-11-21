@@ -50,7 +50,7 @@ namespace math {
 				//----+-------------+-----.......---+------.......-----+----.......
 				:
 				(
-					(lim::max() < (ulim::max() - static_cast<utype>(a)))
+					(static_cast<utype>(lim::max()) < (ulim::max() - static_cast<utype>(a)))
 					//  (---------try to store rest---------)    (----------------storable max num----------------)
 					&& (static_cast<utype>((-lim::max()) - b) <= (ulim::max() - lim::max() - static_cast<utype>(a)))
 				)
