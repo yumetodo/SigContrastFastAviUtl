@@ -33,18 +33,17 @@ namespace math {
 			//std::numeric_limits<T>::min() < -std::numeric_limits<T>::max() : most familiar behavior
 			//std::numeric_limits<T>::min() = -std::numeric_limits<T>::max() : possible
 			//note: 0 <= a, b < 0
-			//
+			//    |<------------b-------------->|
 			//lim::min()   -lim::max()          0                  a            lim::max()
 			//    |             |               |                  |                |
 			//----+-------------+-----.......---+------.......-----+----.......-----+-----
 			return (-lim::max() <= b)
-				//``-b`` is no problem
-				//
+				//note: ``-b`` is no problem
 				//lim::min()   -lim::max()          b                  0
 				//    |             |               |                  |
 				//----+-------------+-----.......---+------.......-----+----.......
 				? static_cast<utype>(a) + static_cast<std::make_unsigned_t<T2>>(-b)
-				//std::numeric_limits<T>::min() <= b < -std::numeric_limits<T>::max()
+				//note: std::numeric_limits<T>::min() <= b < -std::numeric_limits<T>::max()
 				//lim::min()        b          -lim::max()             0
 				//    |             |               |                  |
 				//----+-------------+-----.......---+------.......-----+----.......
@@ -57,7 +56,9 @@ namespace math {
 					//can store
 					? static_cast<utype>(a) + static_cast<utype>(lim::max()) + static_cast<utype>((-lim::max()) - b)
 					//when processing system doesn't use two's complement and 
-					//std::numeric_limits<T>::min() < -std::numeric_limits<T>::max()
+					//std::numeric_limits<T>::min() < -std::numeric_limits<T>::max(),
+					//or
+					//a, before pass to this function, is unsigned and type of a is utype,
 					//there is possibility no way to store result.
 					//In that case, we throw exception.
 					: throw std::invalid_argument("cannot store result.");
@@ -76,6 +77,7 @@ namespace math {
 			? abs_diff(b, a)
 			: (b <= 0 || lim::min() + b <= a)
 				? static_cast<utype>(b - a)
+				//0 < b
 				: detail::abs_diff_impl(static_cast<utype>(b), a);
 	}
 	template <typename T1, typename T2, std::enable_if_t<
@@ -89,6 +91,7 @@ namespace math {
 			? static_cast<std::make_unsigned_t<T2>>(b) - a
 			: (0 <= b)
 				? a - static_cast<std::make_unsigned_t<T2>>(b)
+				//b < 0
 				: detail::abs_diff_impl(a, b);
 	}
 	template <typename T1, typename T2, std::enable_if_t<
