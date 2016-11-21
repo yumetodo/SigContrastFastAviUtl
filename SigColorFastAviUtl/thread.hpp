@@ -2,58 +2,10 @@
 #include <thread>
 #include <type_traits>
 #include <vector>
-#include <limits>
 #include <future>
 #include <iterator>
+#include "math.hpp"
 namespace parallel {
-	namespace detail {
-		template <typename T1, typename T2, std::enable_if_t<
-			std::is_signed<T1>::value && std::is_signed<T2>::value,
-			std::nullptr_t
-		> = nullptr>
-		static inline constexpr auto abs_diff(const T1& a, const T2& b) noexcept
-			-> std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>
-		{
-			return (a < b) 
-				? (0 < b && a < std::numeric_limits<T2>::min() + b) 
-					? static_cast<std::make_unsigned_t<T2>>(b) + static_cast<std::make_unsigned_t<T2>>(-a)
-					: static_cast<std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>>(b - a)
-				: (0 < a && b < std::numeric_limits<T1>::min() + a)
-					? static_cast<std::make_unsigned_t<T2>>(a) + static_cast<std::make_unsigned_t<T2>>(-b)
-					: static_cast<std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>>(a - b);
-		}
-		template <typename T1, typename T2, std::enable_if_t<
-			std::is_unsigned<T1>::value && std::is_signed<T2>::value,
-			std::nullptr_t
-		> = nullptr>
-		static inline constexpr auto abs_diff(const T1& a, const T2& b) noexcept
-			->std::conditional_t<(sizeof(T1) < sizeof(T2)), std::make_unsigned_t<T2>, T1>
-		{
-			return (a < b)
-				? static_cast<std::make_unsigned_t<T2>>(b) - a
-				: (b < 0)
-					? a + static_cast<std::make_unsigned_t<T2>>(-b)
-					: a - static_cast<std::make_unsigned_t<T2>>(b);
-		}
-		template <typename T1, typename T2, std::enable_if_t<
-			std::is_signed<T1>::value && std::is_unsigned<T2>::value,
-			std::nullptr_t
-		> = nullptr>
-		static inline constexpr auto abs_diff(const T1& a, const T2& b) noexcept
-			->std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, std::make_unsigned_t<T1>>
-		{
-			return abs_diff(b, a);
-		}
-		template <typename T1, typename T2, std::enable_if_t<
-			std::is_unsigned<T1>::value && std::is_unsigned<T2>::value,
-			std::nullptr_t
-		> = nullptr>
-		static inline constexpr auto abs_diff(const T1& a, const T2& b) noexcept
-			->std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>
-		{
-			return (a < b) ? b - a : a - b;
-		}
-	}
 	template<
 		typename Index, typename Func,
 		typename ...Args,
@@ -65,7 +17,7 @@ namespace parallel {
 			f(begin, end, std::forward<Args>(args)...);
 		}
 		else {
-			const auto num = parallel::detail::abs_diff(end, begin);
+			const auto num = math::abs_diff(end, begin);
 			const auto task_num = num / thread_num;
 			const auto task_rest = num % thread_num;
 			std::vector<std::thread> th;
@@ -158,7 +110,7 @@ namespace parallel {
 			re.push_back(std::async(std::launch::deferred, f, begin, end, std::forward<Args>(args)...));
 		}
 		else {
-			const auto num = parallel::detail::abs_diff(end, begin);
+			const auto num = math::abs_diff(end, begin);
 			const auto task_num = num / thread_num;
 			const auto task_rest = num % thread_num;
 			re.reserve(thread_num);
