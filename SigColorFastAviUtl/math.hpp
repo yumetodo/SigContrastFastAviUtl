@@ -60,7 +60,7 @@ namespace math {
 					//std::numeric_limits<T>::min() < -std::numeric_limits<T>::max()
 					//there is possibility no way to store result.
 					//In that case, we throw exception.
-					: throw std::invalid_argument();
+					: throw std::invalid_argument("cannot store result.");
 		}
 	}
 	template <typename T1, typename T2, std::enable_if_t<
