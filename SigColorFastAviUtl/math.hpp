@@ -72,7 +72,6 @@ namespace math {
 	{
 		using lim = std::numeric_limits<T2>;
 		using utype = std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>;
-		using ulim = std::numeric_limits<utype>;
 		return (b < a)
 			? abs_diff(b, a)
 			: (b <= 0 || lim::min() + b <= a)
