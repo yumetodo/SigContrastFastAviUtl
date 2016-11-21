@@ -21,7 +21,7 @@ namespace math {
 			std::is_unsigned<T1>::value && std::is_signed<T2>::value,
 			std::nullptr_t
 		> = nullptr>
-		static inline auto abs_diff_impl(const T1& a, const T2& b)
+		static inline constexpr auto abs_diff_impl(const T1& a, const T2& b)
 			->std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>
 		{
 			using lim = std::numeric_limits<T2>;
