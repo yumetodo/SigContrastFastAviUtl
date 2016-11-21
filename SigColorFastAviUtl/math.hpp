@@ -86,7 +86,7 @@ namespace math {
 	static inline constexpr auto abs_diff(const T1& a, const T2& b)
 		->std::conditional_t<(sizeof(T1) < sizeof(T2)), std::make_unsigned_t<T2>, T1>
 	{
-		return (a < b)
+		return (0 < b && a < static_cast<std::make_unsigned_t<T2>>(b))
 			? static_cast<std::make_unsigned_t<T2>>(b) - a
 			: (0 <= b)
 				? a - static_cast<std::make_unsigned_t<T2>>(b)
