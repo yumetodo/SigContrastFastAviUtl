@@ -19,7 +19,7 @@
 #	include <tchar.h>
 #elif defined(__linux__)
 #	define MY_ARC_FOR_LINUX 1
-#	include <sys/types.h> 
+#	include <sys/types.h>
 #	include <unistd.h>
 #	include <fstream>
 unsigned int get_randome_from_dev_random() {
@@ -61,7 +61,7 @@ namespace intrin {
 		char str[12];
 	};
 	regs_t get_cpuid(unsigned int level) {
-		regs_t re = { 0 };
+		regs_t re = {};
 		static_assert(sizeof(re) == (sizeof(uint32_t) * 4), "illegal size of struct regs_t ");
 #	if defined(__INTEL_COMPILER) || defined(_MSC_VER) && !defined(__clang__)
 		__cpuid(reinterpret_cast<int*>(&re), static_cast<int>(level));
@@ -157,32 +157,36 @@ static seed_v_t create_seed_v() {
 	});// ベクタの初期化
 #endif //_CRT_RAND_S
 #ifndef MY_NO_ASM
+#	ifndef NO_RDRAND
 	if (intrin::IsRDRANDsupport()) {//RDRAND命令の結果もベクターに追加
 		for (unsigned int i = 0; i < 4; i++) {
 			unsigned int rdrand_value = 0;
-#	if defined(_MSC_VER) || defined(__INTEL_COMPILER)
+#		if defined(_MSC_VER) || defined(__INTEL_COMPILER)
 			_rdrand32_step(&rdrand_value);
-#	else//defined(_MSC_VER) || defined(__INTEL_COMPILER)
+#		else//defined(_MSC_VER) || defined(__INTEL_COMPILER)
 			__builtin_ia32_rdrand32_step(&rdrand_value);
-#	endif//defined(_MSC_VER) || defined(__INTEL_COMPILER)
+#		endif//defined(_MSC_VER) || defined(__INTEL_COMPILER)
 			if (0 != rdrand_value) {
 				sed_v.push_back((rdrand_value < std::numeric_limits<decltype(rdrand_value)>::max() - i) ? rdrand_value + i : rdrand_value);
 			}
 		}
 	}
+#	endif
+#	ifndef NO_RDSEED
 	if (intrin::IsRDSEEDsupport()) {
 		for (unsigned int i = 0; i < 5; i++) {
 			unsigned int rdseed_value = 0;
-#	if defined(_MSC_VER) || defined(__INTEL_COMPILER)
+#		if defined(_MSC_VER) || defined(__INTEL_COMPILER)
 			_rdseed32_step(&rdseed_value);
-#	else//defined(_MSC_VER) || defined(__INTEL_COMPILER)
+#		else//defined(_MSC_VER) || defined(__INTEL_COMPILER)
 			__builtin_ia32_rdseed32_step(&rdseed_value);
-#	endif//defined(_MSC_VER) || defined(__INTEL_COMPILER)
+#		endif//defined(_MSC_VER) || defined(__INTEL_COMPILER)
 			if (0 != rdseed_value) {
 				sed_v.push_back((rdseed_value < std::numeric_limits<decltype(rdseed_value)>::max() - i) ? rdseed_value + i : rdseed_value);
 			}
 		}
 	}
+#	endif
 #endif//!defined(MY_NO_ASM)
 #ifdef MY_ARC_FOR_WINDWOS
 	POINT point;

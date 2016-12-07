@@ -62,6 +62,7 @@ artifacts/
 *.tmp
 *.tmp_proj
 *.log
+*.exe
 *.vspscc
 *.vssscc
 .builds
@@ -250,3 +251,11 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
+
+# Cmake
+CMakeFiles/
+cmake_install.cmake
+CMakeCache.txt
+Makefile
+
+#
