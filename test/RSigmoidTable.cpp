@@ -18,9 +18,9 @@ namespace old {
 			float b = strength;
 			//float e1, e2, e3, e4;
 			float result[4]{ 0 };
-			result[0] = std::expf(b*(a - u));
-			result[1] = std::expf(a*b);
-			result[2] = std::expf(b*(a - 1));
+			result[0] = std::exp(b*(a - u));
+			result[1] = std::exp(a*b);
+			result[2] = std::exp(b*(a - 1));
 			result[3] = result[1];
 
 			__m128 ei = _mm_loadu_ps(result);

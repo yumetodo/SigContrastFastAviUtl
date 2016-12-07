@@ -4,6 +4,7 @@
 #include <exception>
 #include <memory>
 #include <algorithm>
+#include <cmath>
 
 /* Base class for Histogram and SigGraph */
 /* Use integer calculation for performance */

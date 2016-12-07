@@ -17,23 +17,23 @@ namespace detail {
 inline float sigmoid(float a, float b, float u) noexcept {
 	//float e1, e2, e3, e4;
 	float result[4];
-	result[0] = std::expf(b*(a - u));
-	result[1] = std::expf(a*b);
-	result[2] = std::expf(b*(a - 1));
+	result[0] = std::exp(b*(a - u));
+	result[1] = std::exp(a*b);
+	result[2] = std::exp(b*(a - 1));
 	result[3] = result[1];
 
 	return detail::sigmoid_impl(_mm_loadu_ps(result));
 }
 inline float sigmoid(float a, float b, float u, __m128 pre) noexcept {
 	//float e1, e2, e3, e4;
-	const __m128 tmp = _mm_set_ss(std::expf(b*(a - u)));
+	const __m128 tmp = _mm_set_ss(std::exp(b*(a - u)));
 	return detail::sigmoid_impl(_mm_or_ps(pre, tmp));
 }
 inline __m128 sigmoid_pre(float a, float b) noexcept {
 	float result[4];
 	result[0] = 0.0f;
-	result[1] = std::expf(a*b);
-	result[2] = std::expf(b*(a - 1));
+	result[1] = std::exp(a*b);
+	result[2] = std::exp(b*(a - 1));
 	result[3] = result[1];
 
 	return _mm_loadu_ps(result);
