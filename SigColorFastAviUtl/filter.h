@@ -12,7 +12,7 @@ typedef	struct {
 	short	cb;					//	Pixel data-Cb ( -2048 ～ 2048 )
 	short	cr;					//	Pixel data-Cr ( -2048 ～ 2048 )
 								//	Pixel data can get outside of the above range
-								//	
+								//
 } PIXEL_YC;
 
 //	PIXEL Struct
@@ -602,7 +602,7 @@ typedef struct {
 	int(*avi_file_read_audio)(AVI_FILE_HANDLE afh, void *buf, int n);
 
 	// Obtains DIB Image Data's pointer from AVI file
-	//	Image format depends on video decode format as defined in 
+	//	Image format depends on video decode format as defined in
 	//	FILE_INFO, which in turn was obtained from avi_file_open()
 	//	afh		: AVI file handle
 	//	n		: Frame number
@@ -788,7 +788,7 @@ typedef struct {
 	//	WM_FILTER_MAIN_MOUSE_UP		: Left mouse release on main window
 	//	WM_FILTER_MAIN_MOUSE_MOVE	: Mouse move on main window
 	//	WM_FILTER_MAIN_MOUSE_DBLCLK	: Double click on main window
-	//	WM_FILTER_MAIN_MOUSE_R_DOWN	: Right mouse down 
+	//	WM_FILTER_MAIN_MOUSE_R_DOWN	: Right mouse down
 	//	WM_FILTER_MAIN_MOUSE_R_UP	: Right mouse release
 	//	WM_FILTER_MAIN_MOUSE_WHEEL	: Mouse scroll
 	//	WM_FILTER_MAIN_KEY_DOWN		: Some key is pressed

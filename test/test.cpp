@@ -224,7 +224,7 @@ IUTEST_TYPED_TEST(abs_diff_test, positive_and_negative_error)
 		);
 		const utype in_positive = positive(engine);
 		IUTEST_EXPECT_THROW(math::abs_diff(in_negative, in_positive), std::invalid_argument)
-			<< "in_negative:" << static_cast<std::intmax_t>(in_negative) 
+			<< "in_negative:" << static_cast<std::intmax_t>(in_negative)
 			<< " in_positive:" << static_cast<std::uintmax_t>(in_positive);
 		IUTEST_EXPECT_THROW(math::abs_diff(in_positive, in_negative), std::invalid_argument);
 	}
@@ -254,8 +254,8 @@ IUTEST_TYPED_TEST(abs_diff_test, other)
 	IUTEST_EXPECT(uzero == math::abs_diff(zero, uzero));
 	IUTEST_EXPECT(uzero == math::abs_diff(uzero, zero));
 	IUTEST_EXPECT(uzero == math::abs_diff(uzero, uzero));
-	constexpr type inputs[] = { 
-		std::numeric_limits<type>::min(), std::numeric_limits<type>::max(), -std::numeric_limits<type>::max() 
+	constexpr type inputs[] = {
+		std::numeric_limits<type>::min(), std::numeric_limits<type>::max(), -std::numeric_limits<type>::max()
 	};
 	for (type i : inputs) {
 		IUTEST_EXPECT(uzero == math::abs_diff(i, i));

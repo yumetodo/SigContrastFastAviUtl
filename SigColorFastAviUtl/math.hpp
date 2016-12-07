@@ -59,7 +59,7 @@ namespace math {
 				)
 					//can store
 					? static_cast<utype>(a) + static_cast<utype>(lim::max()) + static_cast<utype>((-lim::max()) - b)
-					//when processing system doesn't use two's complement and 
+					//when processing system doesn't use two's complement and
 					//std::numeric_limits<T>::min() < -std::numeric_limits<T>::max(),
 					//or
 					//a, before pass to this function, is unsigned and type of a is utype,

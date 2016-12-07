@@ -25,6 +25,5 @@ public:
 protected:
 	std::map<int, int> table;
 	int kmin, kmax, kstep;
-	
 };
 

@@ -67,7 +67,7 @@ namespace parallel {
 	template<
 		typename RandomAccessIterator, typename Func, typename ...Args,
 		std::enable_if_t<
-			std::is_same<std::random_access_iterator_tag, typename std::iterator_traits<RandomAccessIterator>::iterator_category>::value, 
+			std::is_same<std::random_access_iterator_tag, typename std::iterator_traits<RandomAccessIterator>::iterator_category>::value,
 			std::nullptr_t
 		> = nullptr
 	>
@@ -101,7 +101,7 @@ namespace parallel {
 		typename ...Args,
 		std::enable_if_t<std::is_integral<Index>::value, std::nullptr_t> = nullptr
 	>
-	inline auto async_for(Index begin, Index end, Func&& f, Args&& ...args) 
+	inline auto async_for(Index begin, Index end, Func&& f, Args&& ...args)
 		-> std::vector<std::future<std::result_of_t<std::decay_t<Func>(Index, Index, std::decay_t<Args>...)>>>
 	{
 		const unsigned int thread_num = std::thread::hardware_concurrency();

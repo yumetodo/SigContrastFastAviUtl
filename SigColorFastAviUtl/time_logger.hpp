@@ -150,7 +150,7 @@ public:
 		if (this->logbuf_.size() < 20) return;
 		this->logbuf_.pop_front();//remove first data
 		std::ofstream logfile(log_file_name_);
-		logfile 
+		logfile
 			<< "image size," << this->w_ << 'x' << this->h_ << std::endl
 			<< fc
 			<< this->analyze();

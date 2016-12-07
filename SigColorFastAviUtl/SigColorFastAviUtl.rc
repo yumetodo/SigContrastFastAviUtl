@@ -29,7 +29,7 @@ BEGIN
         BEGIN
             VALUE "Comments",         SIG_COLOR_AUF_INFO
             VALUE "CompanyName",      ""
-            VALUE "FileDescription",  SIG_COLOR_FILE_DESCRIPTION 
+            VALUE "FileDescription",  SIG_COLOR_FILE_DESCRIPTION
             VALUE "FileVersion",      SIG_COLOR_VERSION_STR
             VALUE "InternalName",     SIG_COLOR_AUF_NAME
             VALUE "OriginalFileName", SIG_COLOR_AUF_NAME
