@@ -69,22 +69,6 @@ namespace math {
 		}
 	}
 	template <typename T1, typename T2, std::enable_if_t<
-		std::is_signed<T1>::value && std::is_signed<T2>::value,
-		std::nullptr_t
-	> = nullptr>
-	static inline constexpr auto abs_diff(const T1& a, const T2& b) noexcept(detail::abs_diff_both_signed_can_noexcept())
-		->std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>
-	{
-		using lim = std::numeric_limits<T2>;
-		using utype = std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>;
-		return (b < a)
-			? abs_diff(b, a)
-			: (b <= 0 || lim::min() + b <= a)
-				? static_cast<utype>(b - a)
-				//0 < b
-				: detail::abs_diff_impl(static_cast<utype>(b), a);
-	}
-	template <typename T1, typename T2, std::enable_if_t<
 		std::is_unsigned<T1>::value && std::is_signed<T2>::value,
 		std::nullptr_t
 	> = nullptr>
@@ -115,5 +99,32 @@ namespace math {
 		->std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>
 	{
 		return (a < b) ? b - a : a - b;
+	}
+	template <typename T1, typename T2, std::enable_if_t<
+		std::is_signed<T1>::value && std::is_signed<T2>::value,
+		std::nullptr_t
+	> = nullptr>
+	static inline constexpr auto abs_diff(const T1& a, const T2& b) noexcept(detail::abs_diff_both_signed_can_noexcept())
+		->std::make_unsigned_t<std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>>
+	{
+		using bigger_type = std::conditional_t<(sizeof(T1) < sizeof(T2)), T2, T1>;
+		using lim = std::numeric_limits<bigger_type>;
+		using utype = std::make_unsigned_t<bigger_type>;
+		return (b < a)
+			? abs_diff(b, a)
+			//a <= b
+			: (0 <= a)
+				// 0 <= a <= b
+				? abs_diff(static_cast<utype>(a), static_cast<utype>(b))
+				//a <= b, a < 0
+				: (0 < b)
+					//a < 0 < b
+					? detail::abs_diff_impl(static_cast<utype>(b), a)
+					//a <= b <= 0
+					: (-lim::max() <= a || b <= -(-lim::max() - lim::min()))
+						//-lim::max() <= a <= b <= -(-lim::max() - lim::min())
+						? static_cast<utype>(b - a)
+						// lim::min() <= a < -lim::max(), -(-lim::max() - lim::min()) < b <= 0
+						: static_cast<utype>(-(a + lim::max())) + static_cast<utype>(b + lim::max());
 	}
 }
