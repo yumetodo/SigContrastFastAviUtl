@@ -179,7 +179,7 @@ static seed_v_t create_seed_v() {
 #		if defined(_MSC_VER) || defined(__INTEL_COMPILER)
 			_rdseed32_step(&rdseed_value);
 #		else//defined(_MSC_VER) || defined(__INTEL_COMPILER)
-			__builtin_ia32_rdseed32_step(&rdseed_value);
+			__builtin_ia32_rdseed_si_step(&rdseed_value);
 #		endif//defined(_MSC_VER) || defined(__INTEL_COMPILER)
 			if (0 != rdseed_value) {
 				sed_v.push_back((rdseed_value < std::numeric_limits<decltype(rdseed_value)>::max() - i) ? rdseed_value + i : rdseed_value);
