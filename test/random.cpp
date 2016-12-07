@@ -40,6 +40,7 @@ unsigned int get_randome_from_dev_random() {
 #include <ctime>//clock(), time()
 #include <functional>//std::ref in gcc
 #include <chrono>
+#include <climits>
 #if !defined(__c2__) || (defined(__clang__) && (__clang_major__ >= 4 ) || __clang_major__ == 3 && __clang_minor__ >= 9)//古いClang with Microsoft CodeGenはasmに対応していない
 #	ifndef __INTEL_COMPILER
 #		include <immintrin.h>
