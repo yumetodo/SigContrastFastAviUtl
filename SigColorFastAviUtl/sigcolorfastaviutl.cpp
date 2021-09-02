@@ -1,4 +1,4 @@
-﻿struct IUnknown;
+struct IUnknown;
 #define NOMINMAX
 #include <Windows.h>
 #include "filter.h" //please set this to AviUtl SDK's filter.h
@@ -27,10 +27,10 @@ static int	track_default[] =	{ 50,			5 };	//	default values
 static int	track_s[] =			{ 0,			1 };	//	minimum values
 static int	track_e[] =			{ 100,			30 };	//	maximum values
 static_assert(
-	std_future::size(en_name) == std_future::size(track_default)
-	&& std_future::size(track_default) == std_future::size(track_s)
-	&& std_future::size(track_s) == std_future::size(track_e)
-	&& std_future::size(track_s) == static_cast<std::size_t>(track::size),
+	std::size(en_name) == std::size(track_default)
+	&& std::size(track_default) == std::size(track_s)
+	&& std::size(track_s) == std::size(track_e)
+	&& std::size(track_s) == static_cast<std::size_t>(track::size),
 	"error"
 );
 
@@ -47,8 +47,8 @@ static int	check_default[] = {
 #endif
 };				//	for checkbox: 0(unchecked) or 1(checked); for button: must be -1
 static_assert(
-	std_future::size(check_name_en) == std_future::size(check_default)
-	&& std_future::size(check_name_en) == static_cast<std::size_t>(check::size),
+	std::size(check_name_en) == std::size(check_default)
+	&& std::size(check_name_en) == static_cast<std::size_t>(check::size),
 	"error"
 );
 
@@ -192,11 +192,11 @@ namespace sigmoid_contrast {
 		FILTER_FLAG_EX_INFORMATION | FILTER_FLAG_PRIORITY_LOWEST,	//	filter flags, use bitwise OR to add more
 		0, 0,							//	dialogbox size
 		const_cast<char*>(plugin_name),				//	Filter plugin name
-		static_cast<int>(std_future::size(en_name)),						//	トラックバーの数 (0なら名前初期値等もNULLでよい)
+		static_cast<int>(std::size(en_name)),						//	トラックバーの数 (0なら名前初期値等もNULLでよい)
 		const_cast<char**>(en_name),						//	slider label names in English
 		track_default,					//	トラックバーの初期値郡へのポインタ
 		track_s, track_e,				//	トラックバーの数値の下限上限 (NULLなら全て0～256)
-		static_cast<int>(std_future::size(check_default)),						//	チェックボックスの数 (0なら名前初期値等もNULLでよい)
+		static_cast<int>(std::size(check_default)),						//	チェックボックスの数 (0なら名前初期値等もNULLでよい)
 		const_cast<char**>(check_name_en),					//	チェックボックスの名前郡へのポインタ
 		check_default,					//	チェックボックスの初期値郡へのポインタ
 		proc,			//	main filter function, use NULL to skip
@@ -358,11 +358,11 @@ namespace sigmoid_decontrast {
 		FILTER_FLAG_EX_INFORMATION | FILTER_FLAG_PRIORITY_LOWEST,	//	filter flags, use bitwise OR to add more
 		0, 0,							//	dialogbox size
 		const_cast<char*>(plugin_name),				//	Filter plugin name
-		static_cast<int>(std_future::size(en_name)),						//	トラックバーの数 (0なら名前初期値等もNULLでよい)
+		static_cast<int>(std::size(en_name)),						//	トラックバーの数 (0なら名前初期値等もNULLでよい)
 		const_cast<char**>(en_name),						//	slider label names in English
 		track_default,					//	トラックバーの初期値郡へのポインタ
 		track_s, track_e,				//	トラックバーの数値の下限上限 (NULLなら全て0～256)
-		static_cast<int>(std_future::size(check_default)),						//	チェックボックスの数 (0なら名前初期値等もNULLでよい)
+		static_cast<int>(std::size(check_default)),						//	チェックボックスの数 (0なら名前初期値等もNULLでよい)
 		const_cast<char**>(check_name_en),					//	チェックボックスの名前郡へのポインタ
 		check_default,					//	チェックボックスの初期値郡へのポインタ
 		proc,		//	main filter function, use NULL to skip
