@@ -1,12 +1,12 @@
-﻿#include "no_min_max.h"
+#include "no_min_max.h"
 #include "../3rd_party/iutest/include/iutest.hpp"
 #include "SigmoidTable.h"
 #include "RSigmoidTable.h"
 #include "../SigColorFastAviUtl/SigmoidTable.hpp"
 #include "../SigColorFastAviUtl/RSigmoidTable.hpp"
 #include "../SigColorFastAviUtl/sigmoid.hpp"
+#include "../SigColorFastAviUtl/inferior_iota_view.hpp"
 #include "random.hpp"
-#include "inferior_iota_view.hpp"
 #include <iostream>
 #include <algorithm>
 #include <execution>

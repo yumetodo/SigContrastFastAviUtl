@@ -92,7 +92,6 @@
     <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="inferior_iota_view.hpp" />
     <ClInclude Include="LUT.h" />
     <ClInclude Include="no_min_max.h" />
     <ClInclude Include="random.hpp" />
