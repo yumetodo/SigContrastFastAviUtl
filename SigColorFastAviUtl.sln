@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31624.102
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SigColorFastAviUtl", "SigColorFastAviUtl\SigColorFastAviUtl.vcxproj", "{12C3C998-F502-4B2E-9A79-AF67D63094A5}"
 EndProject
@@ -9,28 +9,23 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test\test.vcxproj",
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
-		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{12C3C998-F502-4B2E-9A79-AF67D63094A5}.Debug|x64.ActiveCfg = Debug|Win32
 		{12C3C998-F502-4B2E-9A79-AF67D63094A5}.Debug|x86.ActiveCfg = Debug|Win32
 		{12C3C998-F502-4B2E-9A79-AF67D63094A5}.Debug|x86.Build.0 = Debug|Win32
-		{12C3C998-F502-4B2E-9A79-AF67D63094A5}.Release|x64.ActiveCfg = Release|Win32
 		{12C3C998-F502-4B2E-9A79-AF67D63094A5}.Release|x86.ActiveCfg = Release|Win32
 		{12C3C998-F502-4B2E-9A79-AF67D63094A5}.Release|x86.Build.0 = Release|Win32
-		{22BD0CC7-1611-441A-86BB-93F3E541E393}.Debug|x64.ActiveCfg = Debug|x64
-		{22BD0CC7-1611-441A-86BB-93F3E541E393}.Debug|x64.Build.0 = Debug|x64
 		{22BD0CC7-1611-441A-86BB-93F3E541E393}.Debug|x86.ActiveCfg = Debug|Win32
 		{22BD0CC7-1611-441A-86BB-93F3E541E393}.Debug|x86.Build.0 = Debug|Win32
-		{22BD0CC7-1611-441A-86BB-93F3E541E393}.Release|x64.ActiveCfg = Release|x64
-		{22BD0CC7-1611-441A-86BB-93F3E541E393}.Release|x64.Build.0 = Release|x64
 		{22BD0CC7-1611-441A-86BB-93F3E541E393}.Release|x86.ActiveCfg = Release|Win32
 		{22BD0CC7-1611-441A-86BB-93F3E541E393}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1B54619A-6875-4D99-A936-2B818E18A9E5}
 	EndGlobalSection
 EndGlobal
