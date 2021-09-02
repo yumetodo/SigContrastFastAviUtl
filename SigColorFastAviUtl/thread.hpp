@@ -72,10 +72,10 @@ namespace parallel {
 		> = nullptr
 	>
 	inline auto async_for(RandomAccessIterator begin, RandomAccessIterator end, Func&& f, Args&& ...args)
-		-> std::vector<std::future<std::result_of_t<std::decay_t<Func>(RandomAccessIterator, RandomAccessIterator, std::decay_t<Args>...)>>>
+		-> std::vector<std::future<std::invoke_result_t<Func, RandomAccessIterator, RandomAccessIterator, std::decay_t<Args>...>>>
 	{
 		const unsigned int thread_num = std::thread::hardware_concurrency();
-		std::vector<std::future<std::result_of_t<std::decay_t<Func>(RandomAccessIterator, RandomAccessIterator, std::decay_t<Args>...)>>> re;
+		std::vector<std::future<std::invoke_result_t<Func, RandomAccessIterator, RandomAccessIterator, std::decay_t<Args>...>>> re;
 		if (thread_num < 2) {//thread 非対応
 			re.push_back(std::async(std::launch::deferred, f, begin, end, std::forward<Args>(args)...));
 		}
@@ -102,11 +102,11 @@ namespace parallel {
 		std::enable_if_t<std::is_integral<Index>::value, std::nullptr_t> = nullptr
 	>
 	inline auto async_for(Index begin, Index end, Func&& f, Args&& ...args)
-		-> std::vector<std::future<std::result_of_t<std::decay_t<Func>(Index, Index, std::decay_t<Args>...)>>>
+		-> std::vector<std::future<std::invoke_result_t<Func, Index, Index, std::decay_t<Args>...>>>
 	{
 		const unsigned int thread_num = std::thread::hardware_concurrency();
-		std::vector<std::future<std::result_of_t<std::decay_t<Func>(Index, Index, std::decay_t<Args>...)>>> re;
-		if (thread_num < 2) {//thread 非対応
+		std::vector<std::future<std::invoke_result_t<Func, Index, Index, std::decay_t<Args>...>>> re;
+		if (thread_num < 2) {//thread 非対応B
 			re.push_back(std::async(std::launch::deferred, f, begin, end, std::forward<Args>(args)...));
 		}
 		else {
@@ -132,7 +132,7 @@ namespace parallel {
 		std::enable_if_t<std::is_integral<Index>::value, std::nullptr_t> = nullptr
 	>
 	inline auto async_for(Index num, Func&& f, Args&& ...args)
-		-> std::vector<std::future<std::result_of_t<std::decay_t<Func>(Index, Index, std::decay_t<Args>...)>>>
+		-> std::vector<std::future<std::invoke_result_t<Func, Index, Index, std::decay_t<Args>...>>>
 	{
 		return async_for(static_cast<Index>(0), num, std::forward<Func>(f), std::forward<Args>(args)...);
 	}
