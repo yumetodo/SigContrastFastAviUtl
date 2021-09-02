@@ -46,7 +46,7 @@ inline void RSigmoidTable::change_param(float midtone, float strength) noexcept
 	//0.0 <= midtone <= 1.0, 1.0 <= strength <= 30.0
 	if (midtone == this->midtone_ && strength == this->strength_) return;
 	//clear array for checking multiple insertation at function `RSigmoidTable::insert_to_table`
-	std::fill(table_.begin(), table_.end(), 0);
+	std::fill(table_.begin(), table_.end(), uint16_t{});
 
 	const auto pre_sigmoid = sigmoid_pre(midtone, strength);
 	value_type pre = 0;
