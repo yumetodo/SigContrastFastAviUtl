@@ -1,11 +1,11 @@
-﻿#if defined(__MINGW32__) && !defined(__clang__)
-//mingw-gcc's std::randome_device is broken.
-//gccをwindowsで使うならstd::random_deviceを使ってはいけない - Qiita
-//http://qiita.com/nanashi/items/f94b78398a6c79d939e1
+﻿#if defined(__MINGW32__) && defined(__GNUC__) && !defined(__clang__) && (__GNUC__ < 9 || (__GNUC__ == 9 && __GNUC_MINOR__ <2))
+//mingw-gcc's std::randome_device was broken.
+//https://cpprefjp.github.io/reference/random/random_device.html
 #	define _CRT_RAND_S
 #	include <stdlib.h> //rand_s
 #	include <thread>
-#endif //defined(__MINGW32__) && !defined(__clang__)
+#endif //defined(__MINGW32__) && defined(__GNUC__) && !defined(__clang__) && (__GNUC__ < 9 || (__GNUC__ == 9 && __GNUC_MINOR__ <2))
+struct IUnknown;
 #if defined(_WIN32) || defined(_WIN64)
 #	define MY_ARC_FOR_WINDWOS 1
 #	if !defined(CINTERFACE) && defined(__c2__) &&  __clang_major__ == 3 && __clang_minor__ == 8
