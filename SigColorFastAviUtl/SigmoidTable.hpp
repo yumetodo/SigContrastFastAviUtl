@@ -1,9 +1,10 @@
 ﻿#pragma once
 #include <cstdint>
 #include <array>
-
+#include <execution>
+#include <algorithm>
+#include "inferior_iota_view.hpp"
 #include "sigmoid.hpp"
-#include "thread.hpp"
 class SigmoidTable
 {
 public:
@@ -41,13 +42,11 @@ inline void SigmoidTable::change_param(float midtone, float strength) noexcept
 	//0.0 <= midtone <= 1.0, 1.0 <= strength <= 30.0
 	if (midtone == this->midtone_ && strength == this->strength_) return;
 	table_.front() = 0;
-	parallel::par_for<value_type>(1, bin, [this](value_type begin, value_type end, float midtone, float strength) {
-		const auto pre_sigmoid = sigmoid_pre(midtone, strength);
-		for (value_type x = begin; x < end; x++)
-		{
-			table_[x] = static_cast<value_type>(multiplier * sigmoid(midtone, strength, static_cast<float>(x) / multiplier, pre_sigmoid));
-		}
-	}, midtone, strength);
+	constexpr auto r = inferior::views::iota(std::uint16_t{ 1 }, bin);
+	const auto pre_sigmoid = sigmoid_pre(midtone, strength);
+	std::for_each(std::execution::par, r.begin(), r.end(), [pre_sigmoid, midtone, strength, &t = table_](value_type x) {
+		t[x] = static_cast<value_type>(multiplier * sigmoid(midtone, strength, static_cast<float>(x) / multiplier, pre_sigmoid));
+	});
 	table_.back() = bin;
 }
 
