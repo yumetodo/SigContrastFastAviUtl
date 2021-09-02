@@ -109,7 +109,6 @@
     <ClInclude Include="RSigmoidTable.hpp" />
     <ClInclude Include="sigmoid.hpp" />
     <ClInclude Include="SigmoidTable.hpp" />
-    <ClInclude Include="std_future.hpp" />
     <ClInclude Include="time_logger.hpp" />
     <ClInclude Include="version.h" />
     <ClInclude Include="window_title_manager.hpp" />
