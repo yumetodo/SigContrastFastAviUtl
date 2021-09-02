@@ -1,9 +1,8 @@
-﻿#pragma once
+#pragma once
 #include <cstdint>
 #include <array>
 #include <algorithm>
 #include "sigmoid.hpp"
-#include "thread.hpp"
 class RSigmoidTable
 {
 public:
