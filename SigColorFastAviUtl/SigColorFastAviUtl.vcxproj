@@ -114,7 +114,7 @@
     <ClInclude Include="window_title_manager.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="sigcolorfastaviutl.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="SigColorFastAviUtl.rc" />
