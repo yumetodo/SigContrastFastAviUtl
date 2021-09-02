@@ -1,11 +1,11 @@
-struct IUnknown;
+﻿struct IUnknown;
 #define NOMINMAX
 #include <Windows.h>
 #include "filter.h" //please set this to AviUtl SDK's filter.h
 #include "version.h"
 #include "SigmoidTable.hpp"
 #include "RSigmoidTable.hpp"
-#include "thread.hpp"
+#include "inferior_iota_view.hpp"
 #include "color_cvt.hpp"
 #include "filter_helper.hpp"
 #ifdef USECLOCK
@@ -14,6 +14,8 @@ struct IUnknown;
 #include <chrono>
 #include <ctime>
 #include <ratio>
+#include <execution>
+#include <algorithm>
 namespace ch = std::chrono;
 #endif
 
@@ -120,28 +122,26 @@ namespace sigmoid_contrast {
 
 		if (fc.none_of(check::R, check::G, check::B)){
 			/* Scan Y channel data */
-			parallel::par_for(fpip->h, [fpip](int begin, int end) {
-				for (int r = begin; r < end; r++){
-					for (int c = 0; c < fpip->w; c++){
-						PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
-						px->y = ST.lookup(px->y);
-					}
+			const auto r = inferior::views::iota(0, fpip->h);
+			std::for_each(std::execution::par, r.begin(), r.end(), [fpip](int r) {
+				for (int c = 0; c < fpip->w; c++){
+					PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
+					px->y = ST.lookup(px->y);
 				}
 			});
 		}
 		else { //RGB mode
-			parallel::par_for(fpip->h, [fpip, fc](int begin, int end) {
+			const auto r = inferior::views::iota(0, fpip->h);
+			std::for_each(std::execution::par, r.begin(), r.end(), [fpip, fc](int r) {
 				float buf[4] = { 0 };
-				for (int r = begin; r < end; r++){
-					for (int c = 0; c < fpip->w; c++){
-						PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
-						color_cvt::yc2rgb(buf, px);
-						// transform each channel is needed
-						if (fc[check::B]) buf[1] = static_cast<float>(ST.lookup(buf[1]));
-						if (fc[check::G]) buf[2] = static_cast<float>(ST.lookup(buf[2]));
-						if (fc[check::R]) buf[3] = static_cast<float>(ST.lookup(buf[3]));
-						color_cvt::rgb2yc(px, buf);
-					}
+				for (int c = 0; c < fpip->w; c++){
+					PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
+					color_cvt::yc2rgb(buf, px);
+					// transform each channel is needed
+					if (fc[check::B]) buf[1] = static_cast<float>(ST.lookup(buf[1]));
+					if (fc[check::G]) buf[2] = static_cast<float>(ST.lookup(buf[2]));
+					if (fc[check::R]) buf[3] = static_cast<float>(ST.lookup(buf[3]));
+					color_cvt::rgb2yc(px, buf);
 				}
 			});
 		}
@@ -283,28 +283,26 @@ namespace sigmoid_decontrast {
 
 		if (fc.none_of(check::R, check::G, check::B)){
 			/* Scan Y channel data */
-			parallel::par_for(fpip->h, [fpip](int begin, int end) {
-				for (int r = begin; r < end; r++){
-					for (int c = 0; c < fpip->w; c++){
-						PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
-						px->y = RST.lookup(px->y);
-					}
+			const auto r = inferior::views::iota(0, fpip->h);
+			std::for_each(std::execution::par, r.begin(), r.end(), [fpip](int r) {
+				for (int c = 0; c < fpip->w; c++){
+					PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
+					px->y = RST.lookup(px->y);
 				}
 			});
 		}
 		else{ //RGB mode
-			parallel::par_for(fpip->h, [fpip, fc](int begin, int end) {
+			const auto r = inferior::views::iota(0, fpip->h);
+			std::for_each(std::execution::par, r.begin(), r.end(), [fpip, fc](int r) {
 				float buf[4] = { 0 };
-				for (int r = begin; r < end; r++){
-					for (int c = 0; c < fpip->w; c++){
-						PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
-						color_cvt::yc2rgb(buf, px);
-						// transform each channel is needed
-						if (fc[check::R]) buf[3] = static_cast<float>(RST.lookup(buf[3]));
-						if (fc[check::G]) buf[2] = static_cast<float>(RST.lookup(buf[2]));
-						if (fc[check::B]) buf[1] = static_cast<float>(RST.lookup(buf[1]));
-						color_cvt::rgb2yc(px, buf);
-					}
+				for (int c = 0; c < fpip->w; c++){
+					PIXEL_YC* const px = fpip->ycp_edit + r* fpip->max_w + c;
+					color_cvt::yc2rgb(buf, px);
+					// transform each channel is needed
+					if (fc[check::R]) buf[3] = static_cast<float>(RST.lookup(buf[3]));
+					if (fc[check::G]) buf[2] = static_cast<float>(RST.lookup(buf[2]));
+					if (fc[check::B]) buf[1] = static_cast<float>(RST.lookup(buf[1]));
+					color_cvt::rgb2yc(px, buf);
 				}
 			});
 		}
