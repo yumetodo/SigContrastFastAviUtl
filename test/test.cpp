@@ -6,6 +6,10 @@
 #include "../SigColorFastAviUtl/RSigmoidTable.hpp"
 #include "../SigColorFastAviUtl/sigmoid.hpp"
 #include "random.hpp"
+#include "inferior_iota_view.hpp"
+#include <iostream>
+#include <algorithm>
+#include <execution>
 
 static auto engine = create_engine();
 
@@ -16,13 +20,15 @@ IUTEST_TEST(SigmoidTableCompatibility, SigmoidTable_test) {
 		for (int s = 1; s <= 30; ++s) {
 			old::SigmoidTable old_table(m / 100.0f, static_cast<float>(s), 4096, 4096.0);
 			new_table.change_param(m / 100.0f, static_cast<float>(s));
-			for (int i = 0; i <= 4096; ++i) {
+			constexpr auto r = inferior::views::iota(0, 4097);
+			std::for_each(std::execution::par, r.begin(), r.end(), [&new_table, &old_table, s, m](int i) {
 				IUTEST_ASSERT(0 <= new_table.lookup(i) && new_table.lookup(i) <= 4096);
 				IUTEST_EXPECT(old_table.lookup(i) == new_table.lookup(i))
 					<< " (when i=" << i << " m=" << m << " s=" << s << ')';
 				IUTEST_ASSERT_NEAR(static_cast<float>(old_table.lookup(i)), static_cast<float>(new_table.lookup(i)), 1.0f);
-			}
+			});
 		}
+		std::cerr << "\033[0;35mm=" << m + 1 << "/100\033[0;0m\r" << std::flush;
 	}
 }
 IUTEST_TEST(SigmoidTableCompatibility, RSigmoidTable_test) {
@@ -33,13 +39,15 @@ IUTEST_TEST(SigmoidTableCompatibility, RSigmoidTable_test) {
 		for (int s = 1; s <= 30; ++s) {
 			old::RSigmoidTable old_table(m / 100.0f, static_cast<float>(s), 4096, 4096.0);
 			new_table.change_param(m / 100.0f, static_cast<float>(s));
-			for (int i = 0; i <= 4096; ++i) {
+			constexpr auto r = inferior::views::iota(0, 4097);
+			std::for_each(std::execution::par, r.begin(), r.end(), [&new_table, &old_table, s, m](int i) {
 				IUTEST_ASSERT(0 <= new_table.lookup(i) && new_table.lookup(i) <= 4096);
 				IUTEST_EXPECT(old_table.lookup(i) == new_table.lookup(i))
 					<< " (when i=" << i << " m=" << m << " s=" << s << ')';
 				IUTEST_ASSERT_NEAR(static_cast<float>(old_table.lookup(i)), static_cast<float>(new_table.lookup(i)), 1.0f);
-			}
+			});
 		}
+		std::cerr << "\033[0;35mm=" << m + 1 << "/100\033[0;0m\r" << std::flush;
 	}
 }
 IUTEST_TEST(SigmoidTableCompatibility, SigmoidTable_test_out_of_range) {
