@@ -18,9 +18,6 @@
     <ClInclude Include="filter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="thread.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="sigmoid.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
