@@ -10,7 +10,7 @@ Distributed under the Boost Software License, Version 1.0.
 namespace inferior {
 	namespace ranges {
 		namespace detail {
-			template<typename T, std::enable_if_t<std::is_arithmetic<T>::value, nullptr_t> = nullptr>
+			template<typename T, std::enable_if_t<std::is_arithmetic<T>::value, std::nullptr_t> = nullptr>
 			class iota_view_iterator {
 			private:
 				T i;
@@ -22,12 +22,12 @@ namespace inferior {
 				using pointer = T*;
 				using reference = T;
 
-				constexpr iota_view_iterator() : i() { }
-				constexpr iota_view_iterator(T n) : i(n) { }
-				constexpr iota_view_iterator& operator=(const iota_view_iterator& o) noexcept {
-					i = o.i;
-					return *this;
-				}
+				iota_view_iterator() = default;
+				constexpr iota_view_iterator(T n) noexcept : i(n) { }
+				iota_view_iterator(const iota_view_iterator&) = default;
+				iota_view_iterator(iota_view_iterator&&) = default;
+				iota_view_iterator& operator=(const iota_view_iterator&) = default;
+				iota_view_iterator& operator=(iota_view_iterator&&) = default;
 				constexpr bool operator == (const iota_view_iterator& rhs) const noexcept { return i == rhs.i; }
 				constexpr bool operator != (const iota_view_iterator& rhs) const noexcept { return i != rhs.i; }
 				constexpr T operator * () const noexcept { return i; }
@@ -69,7 +69,7 @@ namespace inferior {
 			template<typename T>
 			constexpr iota_view_iterator<T> operator+(typename iota_view_iterator<T>::difference_type n, const iota_view_iterator<T>& it) noexcept { return static_cast<T>(it + n); }
 		}
-		template<typename T, std::enable_if_t<std::is_arithmetic<T>::value, nullptr_t> = nullptr>
+		template<typename T, std::enable_if_t<std::is_arithmetic<T>::value, std::nullptr_t> = nullptr>
 		class iota_view {
 		public:
 			using value_type = std::remove_cv_t<T>;
@@ -88,7 +88,7 @@ namespace inferior {
 		};
 
 		namespace views {
-			template<typename T, std::enable_if_t<std::is_arithmetic<T>::value, nullptr_t> = nullptr>
+			template<typename T, std::enable_if_t<std::is_arithmetic<T>::value, std::nullptr_t> = nullptr>
 			constexpr iota_view<T> iota(const T& begin, const T& end) noexcept {
 				return{ begin, end };
 			}
