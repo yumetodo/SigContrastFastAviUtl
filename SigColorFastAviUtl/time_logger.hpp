@@ -9,7 +9,9 @@
 #include <execution>
 #include <future>
 #include "filter_helper.hpp"
+template<typename T>
 struct analyzer {
+	using value_type = T;
 	std::size_t count;
 	double average;
 	double stdev;
@@ -17,20 +19,31 @@ struct analyzer {
 	double confidence_95;
 	double confidence_95_min;
 	double confidence_95_max;
-	double min;
-	double max;
+	value_type min;
+	value_type max;
 private:
-	static double calc_sum(const std::deque<double>& logbuf) {
-		return std::reduce(std::execution::par, logbuf.begin(), logbuf.end());
+	static value_type calc_sum(const std::deque<value_type>& logbuf) {
+		return std::reduce(std::execution::par, logbuf.begin(), logbuf.end(), value_type{});
 	}
-	static double calc_average(double sum, std::size_t count) {
-		return sum / count;
+	static double calc_average(value_type sum, std::size_t count) {
+		const auto [quot, rem] = std::div(sum, value_type(count));
+		return double(quot) + double(rem) / count;
 	}
-	static double calc_stdev(const std::deque<double>& logbuf, double average) {
+	template<typename T>
+	static double calc_stdev_impl(T n, double average)
+	{
+		if constexpr (std::is_same_v<double, decltype(n)>) {
+			return n;
+		}
+		else {
+			const auto re = static_cast<double>(n) - average;
+			return re * re;
+		}
+	}
+	static double calc_stdev(const std::deque<value_type>& logbuf, double average) {
 		return std::sqrt(
-			std::reduce(std::execution::par, logbuf.begin(), logbuf.end(), 0.0, [average](double sum, double val) {
-				const auto diff_average = val - average;
-				return sum + diff_average * diff_average;
+			std::reduce(std::execution::par, logbuf.begin(), logbuf.end(), 0.0, [average](auto l, auto r) {
+				return calc_stdev_impl(l, average) + calc_stdev_impl(r, average);
 			}) / (logbuf.size() - 1)
 		);
 	}
@@ -43,7 +56,7 @@ private:
 	static std::pair<double, double> calc_confidence_interval(double average, double confidence) {
 		return{ average - confidence, average + confidence };
 	}
-	static std::pair<double, double>  minmax(const std::deque<double>& logbuf) {
+	static std::pair<value_type, value_type>  minmax(const std::deque<value_type>& logbuf) {
 		const auto it_minmax = std::minmax_element(logbuf.begin(), logbuf.end());
 		return{ *it_minmax.first, *it_minmax.second };
 	}
@@ -53,7 +66,7 @@ public:
 	analyzer(analyzer&&) = default;
 	analyzer& operator=(const analyzer&) = default;
 	analyzer& operator=(analyzer&&) = default;
-	analyzer(const std::deque<double>& logbuf) : count(logbuf.size()) {
+	analyzer(const std::deque<value_type>& logbuf) : count(logbuf.size()) {
 		auto minmax_th = std::async([&logbuf]() { return minmax(logbuf); });
 		average = calc_average(calc_sum(logbuf), count);
 		stdev = calc_stdev(logbuf, average);
@@ -63,7 +76,8 @@ public:
 		std::tie(min, max) = minmax_th.get();
 	}
 };
-inline std::ostream& operator<<(std::ostream& os, const analyzer& analyzed) {
+template<typename T>
+inline std::ostream& operator<<(std::ostream& os, const analyzer<T>& analyzed) {
 	using std::endl;
 	using std::fixed;
 	using std::setprecision;
@@ -85,7 +99,8 @@ class time_logger {
 public:
 	using logging_unit = std::chrono::nanoseconds;
 private:
-	std::deque<double> logbuf_;
+	using rep = logging_unit::rep;
+	std::deque<rep> logbuf_;
 	const char* filter_name_;
 	const char* log_file_name_;
 	int w_;
@@ -98,7 +113,7 @@ public:
 	time_logger& operator=(time_logger&&) = default;
 	time_logger(const char* filter_name, const char* log_file_name) : logbuf_(), filter_name_(filter_name), log_file_name_(log_file_name), w_(), h_() {}
 	void push(const logging_unit& ns, const FILTER_PROC_INFO* fpip) {
-		this->logbuf_.push_back(static_cast<double>(ns.count()));
+		this->logbuf_.push_back(ns.count());
 		if (this->w_ != fpip->w) {
 			this->w_ = fpip->w;
 			this->clear();
@@ -113,7 +128,7 @@ public:
 		this->push(std::chrono::duration_cast<logging_unit>(time), fpip);
 	}
 private:
-	analyzer analyze() { return this->logbuf_; }
+	analyzer<rep> analyze() { return this->logbuf_; }
 public:
 	void write_out(const filter_proxy& fc) {
 		if (this->logbuf_.size() < 20) return;
