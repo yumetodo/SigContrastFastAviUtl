@@ -1,4 +1,4 @@
-﻿#include "no_min_max.h"
+#include "no_min_max.h"
 #ifndef IUTEST_USE_MAIN
 #define IUTEST_USE_MAIN
 #endif
@@ -14,7 +14,7 @@
 #include <algorithm>
 #include <execution>
 
-static auto engine = create_engine();
+thread_local auto engine = create_engine();
 
 IUTEST_TEST(SigmoidTableCompatibility, SigmoidTable_test) {
 	//0.0 <= midtone <= 1.0, 1.0 <= strength <= 30.0
