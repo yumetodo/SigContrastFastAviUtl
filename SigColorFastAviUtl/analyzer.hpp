@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <chrono>
 #include <deque>
 #include <string>
@@ -22,7 +22,7 @@ struct analyzer {
 	value_type max;
 private:
 	static value_type calc_sum(const std::deque<value_type>& logbuf) {
-		return std::reduce(std::execution::par, logbuf.begin(), logbuf.end(), value_type{});
+		return std::reduce(std::execution::par, logbuf.begin(), logbuf.end());
 	}
 	static double calc_average(value_type sum, std::size_t count) {
 		const auto [quot, rem] = std::div(sum, value_type(count));
