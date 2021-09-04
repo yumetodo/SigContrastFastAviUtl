@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <chrono>
 #include <deque>
 #include <string>
@@ -28,16 +28,11 @@ private:
 		const auto [quot, rem] = std::div(sum, value_type(count));
 		return double(quot) + double(rem) / count;
 	}
-	template<typename T>
-	static double calc_stdev_impl(T n, double average)
+	static double calc_stdev_impl(double n, double) { return n; }
+	static double calc_stdev_impl(value_type n, double average)
 	{
-		if constexpr (std::is_same_v<double, decltype(n)>) {
-			return n;
-		}
-		else {
-			const auto re = static_cast<double>(n) - average;
-			return re * re;
-		}
+		const auto re = static_cast<double>(n) - average;
+		return re * re;
 	}
 	static double calc_stdev(const std::deque<value_type>& logbuf, double average) {
 		return std::sqrt(
