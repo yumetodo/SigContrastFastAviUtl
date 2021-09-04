@@ -48,6 +48,9 @@
     <ClInclude Include="inferior_iota_view.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="analyzer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

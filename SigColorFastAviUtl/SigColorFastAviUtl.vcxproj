@@ -101,6 +101,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="analyzer.hpp" />
     <ClInclude Include="color_cvt.hpp" />
     <ClInclude Include="filter.h" />
     <ClInclude Include="filter_helper.hpp" />
