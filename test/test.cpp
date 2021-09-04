@@ -1,4 +1,4 @@
-﻿#include "no_min_max.h"
+#include "no_min_max.h"
 #ifndef IUTEST_USE_MAIN
 #define IUTEST_USE_MAIN
 #endif
@@ -113,7 +113,7 @@ IUTEST_TEST(Analyzer, calcAverage) {
 	std::generate(input.begin(), input.end(), [d] { return d(engine); });
 	old_accumulate::analyzer old(input);
 	analyzer current(input);
-	IUTEST_EXPECT(old.average == current.average);
+	IUTEST_EXPECT_DOUBLE_EQ(old.average, current.average);
 }
 
 IUTEST_TEST(Analyzer, calcStdev) {
@@ -124,5 +124,5 @@ IUTEST_TEST(Analyzer, calcStdev) {
 	std::generate(input.begin(), input.end(), [d] { return d(engine); });
 	old_accumulate::analyzer old(input);
 	analyzer current(input);
-	IUTEST_EXPECT(old.stdev == current.stdev);
+	IUTEST_EXPECT_DOUBLE_EQ(old.stdev, current.stdev);
 }
