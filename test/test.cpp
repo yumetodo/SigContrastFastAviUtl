@@ -1,14 +1,16 @@
-#include "no_min_max.h"
+﻿#include "no_min_max.h"
 #ifndef IUTEST_USE_MAIN
 #define IUTEST_USE_MAIN
 #endif
 #include "../3rd_party/iutest/include/iutest.hpp"
 #include "SigmoidTable.h"
 #include "RSigmoidTable.h"
+#include "analyzer.hpp"
 #include "../SigColorFastAviUtl/SigmoidTable.hpp"
 #include "../SigColorFastAviUtl/RSigmoidTable.hpp"
 #include "../SigColorFastAviUtl/sigmoid.hpp"
 #include "../SigColorFastAviUtl/inferior_iota_view.hpp"
+#include "../SigColorFastAviUtl/analyzer.hpp"
 #include "random.hpp"
 #include <iostream>
 #include <algorithm>
@@ -16,6 +18,7 @@
 
 thread_local auto engine = create_engine();
 
+#if 0
 IUTEST_TEST(SigmoidTableCompatibility, SigmoidTable_test) {
 	//0.0 <= midtone <= 1.0, 1.0 <= strength <= 30.0
 	SigmoidTable new_table;
@@ -53,6 +56,8 @@ IUTEST_TEST(SigmoidTableCompatibility, RSigmoidTable_test) {
 		std::cerr << "\033[0;35mm=" << m + 1 << "/100\033[0;0m\r" << std::flush;
 	}
 }
+#endif
+
 IUTEST_TEST(SigmoidTableCompatibility, SigmoidTable_test_out_of_range) {
 	//0.0 <= midtone <= 1.0, 1.0 <= strength <= 30.0
 	SigmoidTable new_table;
@@ -98,4 +103,26 @@ IUTEST_TEST(SigmoidCompatibility, sigmod_test) {
 	for (float m : {0.0f, 1.0f}) for (float s : {1.0f, 30.0f}) for (std::uint16_t u : {0, 4096}) {
 		IUTEST_EXPECT(sigmoid(m, s, static_cast<float>(u) / 4096.0f) == sigmoid(m, s, static_cast<float>(u) / 4096.0f, sigmoid_pre(m, s)));
 	}
+}
+
+IUTEST_TEST(Analyzer, calcAverage) {
+	using rep = std::chrono::nanoseconds::rep;
+	std::deque<rep> input;
+	input.resize(1000);
+	std::uniform_int_distribution<rep> d(1000, 7880500);
+	std::generate(input.begin(), input.end(), [d] { return d(engine); });
+	old_accumulate::analyzer old(input);
+	analyzer current(input);
+	IUTEST_EXPECT(old.average == current.average);
+}
+
+IUTEST_TEST(Analyzer, calcStdev) {
+	using rep = std::chrono::nanoseconds::rep;
+	std::deque<rep> input;
+	input.resize(1000);
+	std::uniform_int_distribution<rep> d(1000, 7880500);
+	std::generate(input.begin(), input.end(), [d] { return d(engine); });
+	old_accumulate::analyzer old(input);
+	analyzer current(input);
+	IUTEST_EXPECT(old.stdev == current.stdev);
 }
