@@ -1,4 +1,4 @@
-#include "no_min_max.h"
+﻿#include "no_min_max.h"
 #ifndef IUTEST_USE_MAIN
 #define IUTEST_USE_MAIN
 #endif
@@ -15,6 +15,7 @@
 #include <iostream>
 #include <algorithm>
 #include <execution>
+#include <ranges>
 
 thread_local auto engine = create_engine();
 
@@ -110,7 +111,7 @@ IUTEST_TEST(Analyzer, calcAverage) {
 	std::deque<rep> input;
 	input.resize(1000);
 	std::uniform_int_distribution<rep> d(1000, 7880500);
-	std::generate(input.begin(), input.end(), [d] { return d(engine); });
+	for (auto _ : std::views::iota(0, 1000)) input.emplace_back(d(engine));
 	old_accumulate::analyzer old(input);
 	analyzer current(input);
 	IUTEST_EXPECT_DOUBLE_EQ(old.average, current.average);
@@ -119,9 +120,8 @@ IUTEST_TEST(Analyzer, calcAverage) {
 IUTEST_TEST(Analyzer, calcStdev) {
 	using rep = std::chrono::nanoseconds::rep;
 	std::deque<rep> input;
-	input.resize(1000);
 	std::uniform_int_distribution<rep> d(1000, 7880500);
-	std::generate(input.begin(), input.end(), [d] { return d(engine); });
+	for (auto _ : std::views::iota(0, 1000)) input.emplace_back(d(engine));
 	old_accumulate::analyzer old(input);
 	analyzer current(input);
 	IUTEST_EXPECT_DOUBLE_EQ(old.stdev, current.stdev);
