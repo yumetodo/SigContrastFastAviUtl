@@ -8,6 +8,9 @@ option(USE_RDSEED "use rdseed" ON)
 
 find_package(Threads REQUIRED)
 
+if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUC)
+  find_package(TBB REQUIRED tbb)
+endif()
 ## Set our project name
 project(SigContrastFastAviUtl_test)
 
@@ -57,5 +60,6 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUC)
   if(WIN32)
     target_link_libraries(SigContrastFastAviUtl_test wsock32 ws2_32)
   endif()
+  target_link_libraries(SigContrastFastAviUtl_test ${TBB_IMPORTED_TARGETS})
 endif()
 target_link_libraries(SigContrastFastAviUtl_test Threads::Threads)
