@@ -7,7 +7,6 @@
 #include <cmath>
 #include <execution>
 #include <future>
-#include "filter_helper.hpp"
 template<typename T>
 struct analyzer {
 	using value_type = T;
